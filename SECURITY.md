@@ -24,7 +24,7 @@ Reporting a Vulnerability (回報安全漏洞)
 
 請 不要 在 GitHub 的公開 Issue 中張貼安全漏洞，以免在修復前遭到惡意利用。請透過以下方式聯繫我們：
 
-Email: 請將漏洞詳情寄送至 [您的 Email@example.com] (請替換為您的聯繫信箱)。
+Email: 請將漏洞詳情寄送至 newthingsinthelittlelight@gmail.com (請替換為您的聯繫信箱)。
 
 Private Reporting: 如果本儲存庫已啟用 "Private Vulnerability Reporting" 功能，請至 Security 頁籤點擊 "Report a vulnerability"。
 
