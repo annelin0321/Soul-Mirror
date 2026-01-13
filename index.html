@@ -408,6 +408,7 @@
         const Mic = (props) => <IconWrapper name="mic" {...props} />;
         const MicOff = (props) => <IconWrapper name="mic-off" {...props} />;
         const Pencil = (props) => <IconWrapper name="pencil" {...props} />;
+        const Sparkles = (props) => <IconWrapper name="sparkles" {...props} />;
 
         const STEPS = [
             { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Moon },
@@ -863,6 +864,7 @@
                                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
                                     <button onClick={handleImportClick} className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors" title="匯入備份"><Upload size={14} /> 匯入</button>
                                     <button onClick={handleExport} className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors" title="匯出備份"><Download size={14} /> 匯出</button>
+                                    <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors text-decoration-none" title="前往 Gemini 詢問"><Sparkles size={14} /> 詢問 Gemini</a>
                                     <div className="w-px bg-slate-700/50 mx-1"></div>
                                     <button onClick={() => setShowSummary(true)} className="flex items-center gap-1 text-slate-300 hover:text-amber-400 px-3 py-1.5 text-xs transition-colors font-medium"><BookOpenIcon size={14} /> 檢視紀錄卡</button>
                                 </div>
