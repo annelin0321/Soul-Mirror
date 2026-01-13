@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>靈魂之鏡：夢語聖所 Soul Mirror</title>
     
-    <!-- Icons -->
+    <!-- Icons: Will be dynamically updated to PNG by JS for better iOS support -->
     <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f59e0b'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" id="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f59e0b'/%3E%3C/svg%3E">
     
@@ -23,44 +23,93 @@
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Lucide Icons -->
+    <!-- Lucide Icons (Development Version for Browser) -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Modular) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDocs, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         window.firebaseModules = { 
-            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getFirestore, doc, setDoc, getDocs, onSnapshot, collection 
+            initializeApp, 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged, 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            getDocs, 
+            onSnapshot, 
+            collection 
         };
     </script>
 
-    <!-- Custom Font & Styles -->
+    <!-- Custom Font -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
         
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; overflow-x: hidden; }
-        .font-serif { font-family: 'Noto Serif TC', serif; }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            overflow-x: hidden;
+        }
+        .font-serif {
+            font-family: 'Noto Serif TC', serif;
+        }
         
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        @keyframes twinkle { 0% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.3; transform: scale(0.8); } }
-        @keyframes float { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        @keyframes float {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
 
         .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
         .animate-slideUp { animation: slideUp 0.5s ease-out forwards; }
         .animate-spin-slow { animation: spinSlow 3s linear infinite; }
         .animate-pulse-red { animation: pulse-red 2s infinite; }
         
-        /* Glassmorphism */
-        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
-        .glass-input { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); transition: all 0.3s ease; }
-        .glass-input:focus { background: rgba(30, 41, 59, 0.7); border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.1); }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-input {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+        }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -70,8 +119,15 @@
         @media print {
             body * { visibility: hidden; }
             #summary-view, #summary-view * { visibility: visible; }
-            body, #summary-view { background-color: white !important; background-image: none !important; color: black !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; overflow: visible !important; }
-            .bg-decoration, .no-print { display: none !important; }
+            body, #summary-view {
+                background-color: white !important;
+                background-image: none !important;
+                color: black !important;
+                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
+                overflow: visible !important;
+            }
+            .bg-decoration { display: none !important; }
+            .no-print { display: none !important; }
             .print-text-dark { color: #111827 !important; }
             .print-text-gray { color: #4b5563 !important; }
             .print-border { border-color: #e5e7eb !important; }
@@ -86,54 +142,125 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-        // --- Helpers ---
+        // --- Icon Generator (Fix for iOS Home Screen) ---
         const generateAppIcon = () => {
             try {
-                const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512; const ctx = canvas.getContext('2d');
-                const gradient = ctx.createLinearGradient(0, 0, 512, 512); gradient.addColorStop(0, '#f59e0b'); gradient.addColorStop(1, '#b45309');
-                ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
-                ctx.fillStyle = 'white'; ctx.save(); ctx.translate(256, 256); ctx.scale(15, 15); ctx.translate(-12, -12);
-                const path = new Path2D('M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'); ctx.fill(path); ctx.restore();
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                // 1. Background: Amber Gradient (Full Square for iOS)
+                const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+                gradient.addColorStop(0, '#f59e0b'); // amber-500
+                gradient.addColorStop(1, '#b45309'); // amber-700
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 512, 512); // iOS will round the corners automatically
+
+                // 2. Moon Icon (Centered)
+                ctx.fillStyle = 'white';
+                
+                ctx.save();
+                ctx.translate(256, 256); // Center
+                ctx.scale(15, 15);
+                ctx.translate(-12, -12); // Offset origin
+                const path = new Path2D('M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z');
+                ctx.fill(path);
+                ctx.restore();
+
                 const dataUrl = canvas.toDataURL('image/png');
-                const favicon = document.getElementById('favicon'); const appleIcon = document.getElementById('apple-touch-icon');
-                if (favicon) favicon.href = dataUrl; if (appleIcon) appleIcon.href = dataUrl;
-            } catch (e) { console.error(e); }
+                
+                // Update Link Tags
+                const favicon = document.getElementById('favicon');
+                const appleIcon = document.getElementById('apple-touch-icon');
+                if (favicon) favicon.href = dataUrl;
+                if (appleIcon) appleIcon.href = dataUrl;
+                
+            } catch (e) {
+                console.error("Icon generation failed", e);
+            }
         };
 
+        // --- Background Component ---
         const DreamBackground = () => {
-            const stars = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({ id: i, top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, size: `${Math.random()*3}px`, delay: `${Math.random()*5}s`, duration: `${3+Math.random()*4}s` })), []);
+            const stars = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
+                id: i,
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                size: `${Math.random() * 3}px`,
+                delay: `${Math.random() * 5}s`,
+                duration: `${3 + Math.random() * 4}s`
+            })), []);
+
             return (
                 <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-decoration bg-slate-950">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black opacity-80"></div>
                     <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/30 rounded-full blur-[100px] animate-[float_20s_infinite_ease-in-out]"></div>
                     <div className="absolute bottom-[10%] right-[-5%] w-[400px] h-[400px] bg-amber-900/20 rounded-full blur-[80px] animate-[float_25s_infinite_ease-in-out_reverse]"></div>
                     <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-indigo-900/20 rounded-full blur-[90px] animate-[float_18s_infinite_ease-in-out_1s]"></div>
-                    {stars.map(star => <div key={star.id} className="absolute bg-white rounded-full opacity-0" style={{ top: star.top, left: star.left, width: star.size, height: star.size, animation: `twinkle ${star.duration} ease-in-out infinite`, animationDelay: star.delay }} />)}
+                    {stars.map(star => (
+                        <div key={star.id} className="absolute bg-white rounded-full opacity-0"
+                            style={{ top: star.top, left: star.left, width: star.size, height: star.size, animation: `twinkle ${star.duration} ease-in-out infinite`, animationDelay: star.delay }}
+                        />
+                    ))}
                 </div>
             );
         };
 
         // --- Firebase Hooks ---
         const useFirebaseSync = (localData, setLocalData) => {
-            const [status, setStatus] = useState('offline'); const [user, setUser] = useState(null); const [errorMsg, setErrorMsg] = useState(''); const dbRef = useRef(null); const unsubscribeRef = useRef(null); const authRef = useRef(null);
+            const [status, setStatus] = useState('offline'); 
+            const [user, setUser] = useState(null);
+            const [errorMsg, setErrorMsg] = useState(''); 
+            const dbRef = useRef(null);
+            const unsubscribeRef = useRef(null);
+            const authRef = useRef(null);
 
             useEffect(() => {
                 if (!window.firebaseModules) return;
                 const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, signInWithCustomToken } = window.firebaseModules;
-                const MANUAL_CONFIG = { apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I", authDomain: "soul-mirror-999e5.firebaseapp.com", projectId: "soul-mirror-999e5", storageBucket: "soul-mirror-999e5.firebasestorage.app", messagingSenderId: "978882078040", appId: "1:978882078040:web:8110f9b28158668fecb12d", measurementId: "G-L4XBYVJWYG" };
-                const config = (typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : null) || MANUAL_CONFIG;
+
+                const MANUAL_CONFIG = {
+                    apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I",
+                    authDomain: "soul-mirror-999e5.firebaseapp.com",
+                    projectId: "soul-mirror-999e5",
+                    storageBucket: "soul-mirror-999e5.firebasestorage.app",
+                    messagingSenderId: "978882078040",
+                    appId: "1:978882078040:web:8110f9b28158668fecb12d",
+                    measurementId: "G-L4XBYVJWYG"
+                };
+
+                const envConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : null;
+                const config = envConfig || MANUAL_CONFIG;
+
                 if (!config) return;
 
                 try {
-                    const app = initializeApp(config); const auth = getAuth(app); const db = getFirestore(app);
-                    dbRef.current = db; authRef.current = auth;
+                    const app = initializeApp(config);
+                    const auth = getAuth(app);
+                    const db = getFirestore(app);
+                    dbRef.current = db;
+                    authRef.current = auth;
+
                     onAuthStateChanged(auth, (u) => {
-                        if (u) { setUser(u); setStatus('synced'); } 
-                        else { signInAnonymously(auth).catch((err) => { console.warn("Anon auth failed", err); setStatus('offline'); }); }
+                        if (u) {
+                            setUser(u);
+                            setStatus('synced');
+                        } else {
+                            signInAnonymously(auth).catch((err) => {
+                                console.warn("Anonymous auth failed", err);
+                                setStatus('offline');
+                            });
+                        }
                     });
-                } catch (e) { console.error(e); setStatus('error'); setErrorMsg(`Init Error: ${e.message}`); }
+                } catch (e) {
+                    console.error("Firebase Init Error", e);
+                    setStatus('error');
+                    setErrorMsg(`Init Error: ${e.message}`);
+                }
             }, []);
 
             // Draft Sync
@@ -146,9 +273,14 @@
                 unsubscribeRef.current = onSnapshot(doc(dbRef.current, docPath), (docSnap) => {
                     if (docSnap.exists()) {
                         const cloudData = docSnap.data();
-                        if (JSON.stringify(cloudData) !== JSON.stringify(localData)) { setLocalData(prev => ({ ...prev, ...cloudData })); }
+                        if (JSON.stringify(cloudData) !== JSON.stringify(localData)) {
+                            setLocalData(prev => ({ ...prev, ...cloudData }));
+                        }
                     }
-                }, (error) => { setStatus('error'); setErrorMsg(`Sync Error: ${error.message}`); });
+                }, (error) => {
+                    setStatus('error');
+                    setErrorMsg(`Sync Error: ${error.message}`);
+                });
                 return () => { if (unsubscribeRef.current) unsubscribeRef.current(); };
             }, [user]); 
 
@@ -159,9 +291,15 @@
                 const { doc, setDoc } = window.firebaseModules;
                 const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'soul-mirror-default';
                 const docPath = `artifacts/${appId}/users/${user.uid}/drafts/current_v2`;
+
                 const timer = setTimeout(async () => {
-                    try { await setDoc(doc(dbRef.current, docPath), localData); setStatus('saved'); } 
-                    catch (err) { setStatus('error'); setErrorMsg(`Save Error: ${err.message}`); }
+                    try {
+                        await setDoc(doc(dbRef.current, docPath), localData);
+                        setStatus('saved');
+                    } catch (err) {
+                        setStatus('error');
+                        setErrorMsg(`Save Error: ${err.message}`);
+                    }
                 }, 1000); 
                 return () => clearTimeout(timer);
             }, [localData, user]);
@@ -169,11 +307,18 @@
             const loginGoogle = async () => {
                 if (!authRef.current || !window.firebaseModules) return;
                 const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
-                try { await signInWithPopup(authRef.current, new GoogleAuthProvider()); } 
-                catch (e) { setErrorMsg(`Login Error: ${e.message}`); alert("登入失敗: " + e.message); }
+                try {
+                    await signInWithPopup(authRef.current, new GoogleAuthProvider());
+                } catch (e) {
+                    setErrorMsg(`Login Error: ${e.message}`);
+                    alert("登入失敗: " + e.message);
+                }
             };
 
-            const logout = async () => { if (authRef.current) await window.firebaseModules.signOut(authRef.current); };
+            const logout = async () => {
+                 if (!authRef.current || !window.firebaseModules) return;
+                 await window.firebaseModules.signOut(authRef.current);
+            };
 
             return { status, user, errorMsg, loginGoogle, logout, db: dbRef.current, auth: authRef.current };
         };
@@ -228,43 +373,152 @@
             return { history, saveToHistory };
         };
 
+        // --- Speech Hook ---
         const useSpeechRecognition = () => {
-            const [isListening, setIsListening] = useState(false); const [transcript, setTranscript] = useState('');
-            const recognitionRef = useRef(null); const wakeLockRef = useRef(null);
+            const [isListening, setIsListening] = useState(false);
+            const [transcript, setTranscript] = useState('');
+            const recognitionRef = useRef(null);
+            const wakeLockRef = useRef(null);
+
+            const requestWakeLock = async () => {
+                if ('wakeLock' in navigator) {
+                    try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch (err) {}
+                }
+            };
+
+            const releaseWakeLock = async () => {
+                if (wakeLockRef.current) {
+                    try { await wakeLockRef.current.release(); wakeLockRef.current = null; } catch (err) {}
+                }
+            };
 
             useEffect(() => {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) return;
+
                 const recognition = new SpeechRecognition();
-                recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'zh-TW'; 
-                recognition.onstart = async () => { setIsListening(true); try{wakeLockRef.current=await navigator.wakeLock.request('screen');}catch(e){} };
-                recognition.onend = async () => { setIsListening(false); if(wakeLockRef.current){try{await wakeLockRef.current.release();wakeLockRef.current=null;}catch(e){}} };
-                recognition.onresult = (e) => {
-                    let final = ''; for (let i = e.resultIndex; i < e.results.length; ++i) if(e.results[i].isFinal) final += e.results[i][0].transcript;
-                    if(final) setTranscript(p => p + final);
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'zh-TW'; 
+
+                recognition.onstart = () => { setIsListening(true); requestWakeLock(); };
+                recognition.onend = () => { setIsListening(false); releaseWakeLock(); };
+                recognition.onresult = (event) => {
+                    let finalTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                    }
+                    if (finalTranscript) setTranscript(prev => prev + finalTranscript);
                 };
                 recognitionRef.current = recognition;
             }, []);
-            return { isListening, transcript, startListening: () => recognitionRef.current?.start(), stopListening: () => recognitionRef.current?.stop(), resetTranscript: () => setTranscript('') };
+
+            const startListening = () => { if (recognitionRef.current) recognitionRef.current.start(); else alert("瀏覽器不支援語音辨識"); };
+            const stopListening = () => { if (recognitionRef.current) recognitionRef.current.stop(); };
+            const resetTranscript = () => setTranscript('');
+
+            return { isListening, transcript, startListening, stopListening, resetTranscript };
         };
 
-        // --- Icons & Components ---
+        // --- Shared Components ---
         const IconWrapper = ({ name, size = 24, className, ...props }) => {
             const ref = useRef(null);
-            useEffect(() => { if (window.lucide && ref.current) { const i = document.createElement('i'); i.setAttribute('data-lucide', name); ref.current.innerHTML = ''; ref.current.appendChild(i); window.lucide.createIcons({ root: ref.current, attrs: { width: size, height: size } }); } }, [name, size]);
+            useEffect(() => {
+                if (window.lucide && ref.current) {
+                    const i = document.createElement('i');
+                    i.setAttribute('data-lucide', name);
+                    ref.current.innerHTML = ''; 
+                    ref.current.appendChild(i);
+                    window.lucide.createIcons({ root: ref.current, attrs: { width: size, height: size } });
+                }
+            }, [name, size]);
             return <span ref={ref} className={className} style={{ display: 'inline-flex', lineHeight: 0 }} {...props} />;
         };
-        const Icons = { Moon: p=>IconWrapper({name:'moon',...p}), Search: p=>IconWrapper({name:'search',...p}), Scale: p=>IconWrapper({name:'scale',...p}), Feather: p=>IconWrapper({name:'feather',...p}), ChevronLeft: p=>IconWrapper({name:'chevron-left',...p}), ChevronRight: p=>IconWrapper({name:'chevron-right',...p}), Plus: p=>IconWrapper({name:'plus',...p}), Trash2: p=>IconWrapper({name:'trash-2',...p}), Save: p=>IconWrapper({name:'save',...p}), Download: p=>IconWrapper({name:'download',...p}), X: p=>IconWrapper({name:'x',...p}), Book: p=>IconWrapper({name:'book',...p}), BookOpen: p=>IconWrapper({name:'book-open',...p}), Cloud: p=>IconWrapper({name:'cloud',...p}), Loader2: p=>IconWrapper({name:'loader-2',...p}), Check: p=>IconWrapper({name:'check',...p}), LogIn: p=>IconWrapper({name:'log-in',...p}), Upload: p=>IconWrapper({name:'upload',...p}), AlertTriangle: p=>IconWrapper({name:'alert-triangle',...p}), Printer: p=>IconWrapper({name:'printer',...p}), Mic: p=>IconWrapper({name:'mic',...p}), MicOff: p=>IconWrapper({name:'mic-off',...p}), Pencil: p=>IconWrapper({name:'pencil',...p}), Sparkles: p=>IconWrapper({name:'sparkles',...p}), Calendar: p=>IconWrapper({name:'calendar',...p}) };
 
-        const STEPS = [ { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Icons.Moon }, { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Icons.Search }, { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Icons.Scale }, { id: 3, title: '整合', subtitle: 'The Integration', icon: Icons.Feather } ];
-        const MOOD_OPTIONS = [ { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/30 text-red-200 border-red-500/50' }, { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/30 text-orange-200 border-orange-500/50' }, { label: '驚訝/震撼', value: 'surprise', color: 'bg-lime-900/30 text-lime-200 border-lime-500/50' }, { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/30 text-yellow-200 border-yellow-500/50' }, { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/30 text-blue-200 border-blue-500/50' }, { label: '愛/連結', value: 'love', color: 'bg-pink-900/30 text-pink-200 border-pink-500/50' }, { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/30 text-indigo-200 border-indigo-500/50' }, { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/30 text-purple-200 border-purple-500/50' }, { label: '厭惡/排斥', value: 'disgust', color: 'bg-emerald-900/30 text-emerald-200 border-emerald-500/50' }, { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700/50 text-slate-300 border-slate-500/50' }, { label: '麻木/空虛', value: 'numb', color: 'bg-zinc-700/50 text-zinc-400 border-zinc-500/50' } ];
-        const SYMBOL_TYPES = [ { label: '人物 (People)', value: 'PERSON' }, { label: '物品 (Objects)', value: 'OBJECT' }, { label: '地點 (Place)', value: 'PLACE' }, { label: '情節 (Events)', value: 'EVENT' } ];
-        const INITIAL_STATE = { id: '', date: new Date().toISOString().split('T')[0], title: '', narrative: '', moods: [], waking_mood: '', symbols: [], discernment: { somatic: '', theological_reflection: '' }, integration: { message_to_self: '', scripture: '', prayer_action: '' } };
+        const Icons = {
+            Moon: (p) => <IconWrapper name="moon" {...p} />,
+            Search: (p) => <IconWrapper name="search" {...p} />,
+            Scale: (p) => <IconWrapper name="scale" {...p} />,
+            Feather: (p) => <IconWrapper name="feather" {...p} />,
+            ChevronLeft: (p) => <IconWrapper name="chevron-left" {...p} />,
+            ChevronRight: (p) => <IconWrapper name="chevron-right" {...p} />,
+            Plus: (p) => <IconWrapper name="plus" {...p} />,
+            Trash2: (p) => <IconWrapper name="trash-2" {...p} />,
+            Save: (p) => <IconWrapper name="save" {...p} />,
+            Download: (p) => <IconWrapper name="download" {...p} />,
+            X: (p) => <IconWrapper name="x" {...p} />,
+            Book: (p) => <IconWrapper name="book" {...p} />,
+            BookOpen: (p) => <IconWrapper name="book-open" {...p} />,
+            Cloud: (p) => <IconWrapper name="cloud" {...p} />,
+            Loader2: (p) => <IconWrapper name="loader-2" {...p} />,
+            Check: (p) => <IconWrapper name="check" {...p} />,
+            LogIn: (p) => <IconWrapper name="log-in" {...p} />,
+            Upload: (p) => <IconWrapper name="upload" {...p} />,
+            AlertTriangle: (p) => <IconWrapper name="alert-triangle" {...p} />,
+            Printer: (p) => <IconWrapper name="printer" {...p} />,
+            Mic: (p) => <IconWrapper name="mic" {...p} />,
+            MicOff: (p) => <IconWrapper name="mic-off" {...p} />,
+            Pencil: (p) => <IconWrapper name="pencil" {...p} />,
+            Sparkles: (p) => <IconWrapper name="sparkles" {...p} />,
+            Calendar: (p) => <IconWrapper name="calendar" {...p} />,
+        };
 
-        const Label = ({ children, hint }) => (<label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif print-text-dark drop-shadow-md">{children}{hint && <span className="block mt-1 text-xs text-slate-400 font-sans font-light leading-relaxed print-text-gray">{hint}</span>}</label>);
-        const Input = ({ className = "", ...props }) => (<input className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border ${className}`} {...props} />);
-        const Textarea = ({ className = "", ...props }) => (<textarea className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input resize-none leading-relaxed print-bg-white print-text-dark print-border ${className}`} {...props} />);
+        const STEPS = [
+            { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Icons.Moon },
+            { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Icons.Search },
+            { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Icons.Scale },
+            { id: 3, title: '整合', subtitle: 'The Integration', icon: Icons.Feather },
+        ];
 
+        const MOOD_OPTIONS = [
+            { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/30 text-red-200 border-red-500/50' },
+            { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/30 text-orange-200 border-orange-500/50' },
+            { label: '驚訝/震撼', value: 'surprise', color: 'bg-lime-900/30 text-lime-200 border-lime-500/50' },
+            { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/30 text-yellow-200 border-yellow-500/50' },
+            { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/30 text-blue-200 border-blue-500/50' },
+            { label: '愛/連結', value: 'love', color: 'bg-pink-900/30 text-pink-200 border-pink-500/50' },
+            { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/30 text-indigo-200 border-indigo-500/50' },
+            { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/30 text-purple-200 border-purple-500/50' },
+            { label: '厭惡/排斥', value: 'disgust', color: 'bg-emerald-900/30 text-emerald-200 border-emerald-500/50' },
+            { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700/50 text-slate-300 border-slate-500/50' },
+            { label: '麻木/空虛', value: 'numb', color: 'bg-zinc-700/50 text-zinc-400 border-zinc-500/50' },
+        ];
+
+        const SYMBOL_TYPES = [
+            { label: '人物 (People)', value: 'PERSON' },
+            { label: '物品 (Objects)', value: 'OBJECT' },
+            { label: '地點 (Place)', value: 'PLACE' },
+            { label: '情節 (Events)', value: 'EVENT' },
+        ];
+
+        const INITIAL_STATE = {
+            id: '', 
+            date: new Date().toISOString().split('T')[0],
+            title: '',
+            narrative: '', 
+            moods: [],
+            waking_mood: '', 
+            symbols: [],
+            discernment: { somatic: '', theological_reflection: '' },
+            integration: { message_to_self: '', scripture: '', prayer_action: '' }
+        };
+
+        const Label = ({ children, hint }) => (
+            <label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif print-text-dark drop-shadow-md">
+                {children}
+                {hint && <span className="block mt-1 text-xs text-slate-400 font-sans font-light leading-relaxed print-text-gray">{hint}</span>}
+            </label>
+        );
+
+        const Input = ({ className = "", ...props }) => (
+            <input className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border ${className}`} {...props} />
+        );
+
+        const Textarea = ({ className = "", ...props }) => (
+            <textarea className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input resize-none leading-relaxed print-bg-white print-text-dark print-border ${className}`} {...props} />
+        );
+
+        // --- Calendar Component ---
         const CalendarModal = ({ isOpen, onClose, history, onSelectDate }) => {
             const [currentDate, setCurrentDate] = useState(new Date());
             
@@ -318,6 +572,8 @@
             );
         };
 
+        // --- Main Application ---
+
         function SoulMirrorApp() {
             const [currentStep, setCurrentStep] = useState(0);
             const [formData, setFormData] = useState(INITIAL_STATE);
@@ -336,14 +592,12 @@
             useEffect(() => { generateAppIcon(); }, []);
             useEffect(() => { if (transcript) { setFormData(prev => ({ ...prev, narrative: (prev.narrative || '') + transcript })); resetTranscript(); } }, [transcript]);
             
-            // Init load
             useEffect(() => {
                 const savedData = localStorage.getItem('soul_mirror_draft_v2');
                 if (savedData) { try { setFormData(prev => ({ ...JSON.parse(savedData), ...prev })); setShowWelcome(false); } catch (e) { console.error(e); } } 
                 else { setFormData(prev => ({ ...prev, id: crypto.randomUUID() })); }
             }, []);
 
-            // Auto-save draft
             useEffect(() => { localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); }, [formData]);
 
             const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
@@ -360,7 +614,7 @@
                 if (hasEntry) {
                     if (confirm(`載入 ${dateStr} 的夢境紀錄？`)) {
                         setFormData(hasEntry);
-                        setShowSummary(true); // Jump to summary view directly
+                        setShowSummary(true); 
                     }
                 } else {
                     if (confirm(`切換到 ${dateStr} 並開始新紀錄？(目前未儲存的內容可能會遺失，請先匯出)`)) {
@@ -380,8 +634,6 @@
                 return <div className="relative group"><div className={`flex items-center gap-2 px-3 py-1 rounded-full border bg-slate-900/80 text-xs font-medium backdrop-blur-sm transition-all ${color}`}>{icon}<span className="hidden md:inline">{text}</span></div>{syncStatus === 'error' && <div className="absolute top-full right-0 mt-2 w-64 bg-red-900 border border-red-700 text-red-100 text-xs p-2 rounded shadow-xl z-50">{errorMsg || "請檢查設定"}</div>}</div>;
             };
 
-            // ... Render Steps Functions (Step 1-4) similar to before ...
-            // Compacted for brevity, logic identical to v0.8
             const renderStep1_Capture = () => (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 1: 捕捉直覺</h3><p className="text-slate-400 text-sm print-text-gray">趁意識防衛機制尚未完全運作前，記錄夢的原始樣貌。</p></div>
@@ -391,7 +643,6 @@
                 </div>
             );
 
-            // ... Step 2, 3, 4 Renders ...
             const renderStep2_Excavation = () => {
                 const getQuestions = (type) => { switch(type) { case 'PERSON': return { l1: '夢中人物是誰？', h1: '是認識的人還是陌生人？', l2: '榮格引導：內在投射', h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？', l3: '神學引導：關係與啟示', h3: '這個人物是否讓你聯想到聖經中的某個角色？' }; case 'OBJECT': return { l1: '出現了什麼顯眼的物品？', h1: '如：鑰匙、枯樹...', l2: '榮格引導：象徵功能', h2: '這個物品是用來做什麼的？它象徵資源還是阻礙？', l3: '神學引導：偶像 vs 恩賜', h3: '這讓你聯想到心中的金牛犢，還是手中的杖？' }; case 'PLACE': return { l1: '夢發生在哪裡？', h1: '如：老家、曠野...', l2: '榮格引導：心靈場景', h2: '這是熟悉的過去還是陌生的未來？', l3: '神學引導：屬靈季節', h3: '這像是「埃及」、「曠野」還是「迦南地」？' }; case 'EVENT': return { l1: '發生了什麼事？', h1: '如：被追趕、飛翔...', l2: '榮格引導：補償機制', h2: '如果夢是在平衡白天的態度，它在說什麼？', l3: '神學引導：試探 vs 試煉', h3: '這是恐懼的試探，還是信心的試煉？' }; default: return {}; } };
                 const q = getQuestions(newSymbol.type);
@@ -421,7 +672,26 @@
                 </div>
             );
 
-            // Summary View
+            // ProgressBar
+            const ProgressBar = ({ currentStep }) => (
+                <div className="w-full mb-8 px-2 relative z-10">
+                    <div className="flex justify-between mb-2">
+                        {STEPS.map((step, index) => {
+                            const Icon = step.icon;
+                            const isActive = index === currentStep;
+                            const isCompleted = index < currentStep;
+                            return (
+                                <div key={step.id} className={`flex flex-col items-center w-1/4 relative z-10 transition-all duration-500 ${isActive ? 'opacity-100 transform scale-105' : 'opacity-60'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 border backdrop-blur-md ${isActive ? 'bg-amber-500/90 border-amber-400 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.6)]' : isCompleted ? 'bg-slate-800/80 border-slate-600 text-amber-500/70' : 'bg-slate-900/50 border-slate-700 text-slate-500'}`}><Icon size={18} /></div>
+                                    <span className={`text-xs font-serif tracking-wider hidden md:block drop-shadow-md ${isActive ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{step.title}</span><span className="text-[10px] text-slate-500 uppercase tracking-widest hidden md:block">{step.subtitle}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="h-1 w-full bg-slate-800/50 rounded-full overflow-hidden relative top-[-3.5rem] md:top-auto z-0 mt-4 backdrop-blur-sm"><div className="h-full bg-gradient-to-r from-amber-700 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-700 ease-out" style={{ width: `${((currentStep + 0.5) / 4) * 100}%` }} /></div>
+                </div>
+            );
+
             const renderSummaryView = () => (
                 <div id="summary-view" className="fixed inset-0 z-50 bg-[#0f172a]/95 backdrop-blur-xl overflow-y-auto animate-fadeIn">
                     <div className="max-w-4xl mx-auto p-8">
@@ -444,26 +714,6 @@
                 </div>
             );
 
-            // ProgressBar
-            const ProgressBar = ({ currentStep }) => (
-                <div className="w-full mb-8 px-2 relative z-10">
-                    <div className="flex justify-between mb-2">
-                        {STEPS.map((step, index) => {
-                            const Icon = step.icon;
-                            const isActive = index === currentStep;
-                            const isCompleted = index < currentStep;
-                            return (
-                                <div key={step.id} className={`flex flex-col items-center w-1/4 relative z-10 transition-all duration-500 ${isActive ? 'opacity-100 transform scale-105' : 'opacity-60'}`}>
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 border backdrop-blur-md ${isActive ? 'bg-amber-500/90 border-amber-400 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.6)]' : isCompleted ? 'bg-slate-800/80 border-slate-600 text-amber-500/70' : 'bg-slate-900/50 border-slate-700 text-slate-500'}`}><Icon size={18} /></div>
-                                    <span className={`text-xs font-serif tracking-wider hidden md:block drop-shadow-md ${isActive ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{step.title}</span><span className="text-[10px] text-slate-500 uppercase tracking-widest hidden md:block">{step.subtitle}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    <div className="h-1 w-full bg-slate-800/50 rounded-full overflow-hidden relative top-[-3.5rem] md:top-auto z-0 mt-4 backdrop-blur-sm"><div className="h-full bg-gradient-to-r from-amber-700 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-700 ease-out" style={{ width: `${((currentStep + 0.5) / 4) * 100}%` }} /></div>
-                </div>
-            );
-
             // --- Root Return ---
             return (
                 <>
@@ -471,10 +721,16 @@
                     <div className="max-w-4xl mx-auto min-h-screen flex flex-col p-4 md:p-8 relative z-10">
                         <header className="flex flex-col gap-4 mb-12 pt-4">
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                                <a href="." className="flex items-center gap-3 hover:opacity-80 transition-opacity group text-decoration-none">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] backdrop-blur-sm border border-white/10 group-hover:scale-105 transition-transform"><Icons.Moon className="text-white drop-shadow-md" size={28} /></div>
-                                    <div><h1 className="text-xl font-serif text-slate-100 tracking-wide drop-shadow-md">靈魂之鏡：夢語聖所 <span className="font-light opacity-60 text-base block md:inline">Soul Mirror</span></h1></div>
-                                </a>
+                                <button onClick={() => setShowWelcome(true)} className="flex items-center gap-3 hover:opacity-80 transition-opacity group text-left">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] backdrop-blur-sm border border-white/10 group-hover:scale-105 transition-transform">
+                                        <Icons.Moon className="text-white drop-shadow-md" size={28} />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-xl font-serif text-slate-100 tracking-wide drop-shadow-md">
+                                            靈魂之鏡：夢語聖所 <span className="font-light opacity-60 text-base block md:inline">Soul Mirror</span>
+                                        </h1>
+                                    </div>
+                                </button>
                                 <div className="flex items-center gap-3 flex-wrap justify-center">
                                     {renderSyncStatus()}
                                     {user && !user.isAnonymous ? (<div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-500" alt="User" /><button onClick={logout} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors">登出</button></div>) : (<button onClick={loginGoogle} className="flex items-center gap-2 bg-white/90 hover:bg-white text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"><Icons.LogIn size={14} /> Google 登入</button>)}
