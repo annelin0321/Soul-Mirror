@@ -413,12 +413,13 @@
             </label>
         );
 
-        const Input = ({ ...props }) => (
-            <input className="w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border" {...props} />
+        // Updated components to merge className correctly for glass effect consistency
+        const Input = ({ className = "", ...props }) => (
+            <input className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border ${className}`} {...props} />
         );
 
-        const Textarea = ({ ...props }) => (
-            <textarea className="w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input resize-none leading-relaxed print-bg-white print-text-dark print-border" {...props} />
+        const Textarea = ({ className = "", ...props }) => (
+            <textarea className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input resize-none leading-relaxed print-bg-white print-text-dark print-border ${className}`} {...props} />
         );
 
         const ProgressBar = ({ currentStep }) => (
