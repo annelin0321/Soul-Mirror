@@ -370,15 +370,8 @@
             
             useEffect(() => {
                 const savedData = localStorage.getItem('soul_mirror_draft_v2');
-                if (savedData) {
-                    try {
-                        setFormData(prev => ({ ...JSON.parse(savedData), ...prev }));
-                        // Important: Do NOT hide welcome screen here. Let user see it and click Enter.
-                        // setShowWelcome(false); 
-                    } catch (e) { console.error(e); }
-                } else {
-                    setFormData(prev => ({ ...prev, id: crypto.randomUUID() }));
-                }
+                if (savedData) { try { setFormData(prev => ({ ...JSON.parse(savedData), ...prev })); setShowWelcome(false); } catch (e) { console.error(e); } } 
+                else { setFormData(prev => ({ ...prev, id: crypto.randomUUID() })); }
             }, []);
 
             useEffect(() => { localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); }, [formData]);
