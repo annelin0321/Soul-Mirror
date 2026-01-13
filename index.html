@@ -33,7 +33,7 @@
         import { getFirestore, doc, setDoc, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         window.firebaseModules = { 
-            initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut, getFirestore, doc, setDoc, collection, onSnapshot 
+            initializeApp, getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getFirestore, doc, setDoc, collection, onSnapshot 
         };
     </script>
 
@@ -52,9 +52,6 @@
         .animate-slideUp { animation: slideUp 0.5s ease-out forwards; }
         
         .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
-        .glass-btn { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); transition: all 0.3s ease; }
-        .glass-btn:hover { background: rgba(30, 41, 59, 0.7); border-color: rgba(245, 158, 11, 0.5); transform: translateY(-2px); }
-        
         .glass-input { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); transition: all 0.3s ease; width: 100%; color: #f1f5f9; border-radius: 0.5rem; padding: 0.75rem; }
         .glass-input:focus { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.1); outline: none; }
 
@@ -62,8 +59,18 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 10px; }
 
-        /* --- 🖨️ PRINT STYLES --- */
+        /* --- 🖨️ PRINT STYLES OPTIMIZED --- */
         @media print {
+            /* Aggressive Reset for Performance */
+            *, *::before, *::after {
+                text-shadow: none !important;
+                box-shadow: none !important;
+                filter: none !important;
+                backdrop-filter: none !important;
+                transition: none !important;
+                animation: none !important;
+            }
+
             body {
                 background-color: white !important;
                 background-image: none !important;
@@ -74,17 +81,18 @@
                 padding: 0 !important;
             }
 
-            /* Hide everything by default using our helper class */
-            .print-hidden {
-                display: none !important;
-            }
+            /* Hide everything by default */
+            body > * { display: none !important; }
             
-            /* Hide specific interactive elements */
-            .no-print, header, footer, button, .fixed {
+            /* Only show root */
+            #root { display: block !important; }
+            
+            /* Hide UI elements */
+            .no-print, header, footer, button, .fixed, .bg-decoration {
                 display: none !important;
             }
 
-            /* Force Summary View to be visible and flow naturally */
+            /* Show Summary View */
             #summary-view {
                 display: block !important;
                 position: static !important;
@@ -96,34 +104,36 @@
                 background: white !important;
                 inset: auto !important;
                 transform: none !important;
+                z-index: 9999 !important;
             }
 
-            /* Container adjustments */
+            /* Summary Content Layout */
             #summary-view .max-w-4xl {
                 max-width: 100% !important;
                 padding: 0 20px !important;
                 margin: 0 !important;
             }
 
-            /* Text Visibility Fixes */
             #summary-view * {
-                color: black !important;
-                text-shadow: none !important;
-                border-color: #ccc !important;
                 visibility: visible !important;
-            }
-            
-            /* Remove glass effects for print */
-            .glass-panel {
-                background: white !important;
-                border: 1px solid #ddd !important;
-                box-shadow: none !important;
-                backdrop-filter: none !important;
-                margin-bottom: 20px !important;
-                page-break-inside: avoid;
+                color: black !important;
             }
 
-            /* Grid Fix */
+            /* Simple styling for print readability */
+            .glass-panel {
+                background: white !important;
+                border: 1px solid #ccc !important;
+                border-radius: 8px !important;
+                margin-bottom: 20px !important;
+                padding: 15px !important;
+                page-break-inside: avoid;
+            }
+            
+            /* Text Color Overrides */
+            .text-amber-500, .text-amber-400, .text-amber-100 { color: #000 !important; font-weight: bold !important; }
+            .text-slate-500, .text-slate-400, .text-slate-300 { color: #333 !important; }
+            .text-purple-300, .text-purple-400 { color: #444 !important; font-style: italic; }
+
             .grid { display: block !important; }
             .md\:grid-cols-2 { display: block !important; }
         }
@@ -281,13 +291,13 @@
             );
         }
 
-        // 列印等待遮罩組件
-        function PrintingOverlay() {
+        function PrintingOverlay({ onClose }) {
             return (
                 <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn no-print">
                     <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(245,158,11,0.5)]"></div>
                     <h3 className="text-xl font-bold text-amber-100 font-serif">正在製作 PDF...</h3>
-                    <p className="text-slate-400 text-sm mt-2">將您的夢境編織成書，請稍候</p>
+                    <p className="text-slate-400 text-sm mt-2 mb-6">將您的夢境編織成書，請稍候</p>
+                    <button onClick={onClose} className="px-4 py-2 border border-slate-600 rounded text-slate-400 hover:text-white text-sm">取消 / 關閉等待視窗</button>
                 </div>
             );
         }
@@ -355,24 +365,20 @@
         // ==========================================
 
         function App() {
-            // View State: 'WELCOME' | 'DASHBOARD' | 'WIZARD'
             const [view, setView] = useState(VIEWS.WELCOME);
             const [currentStep, setCurrentStep] = useState(0);
             const [formData, setFormData] = useState(INITIAL_STATE);
-            
-            // Modal States
             const [isSymbolModalOpen, setIsSymbolModalOpen] = useState(false);
             const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+            const [showWelcome, setShowWelcome] = useState(true);
             const [showSummary, setShowSummary] = useState(false);
-            const [isPrinting, setIsPrinting] = useState(false); // New Printing State
+            const [isPrinting, setIsPrinting] = useState(false);
             
-            // Core States
             const [user, setUser] = useState(null);
             const [syncStatus, setSyncStatus] = useState('offline');
             const [history, setHistory] = useState({});
             const [diagnosis, setDiagnosis] = useState({ title: '', message: '', type: '', domain: '' });
             
-            // Refs
             const dbRef = useRef(null);
             const authRef = useRef(null);
             const fileInputRef = useRef(null);
@@ -410,13 +416,13 @@
                     return onSnapshot(collection(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`), (snap) => {
                         const cloud = {}; snap.forEach(doc => { const d = doc.data(); if(d.date) cloud[d.date] = d; });
                         setHistory(prev => ({ ...prev, ...cloud }));
-                    }, (err) => {
-                        if (err.code === 'permission-denied') setSyncStatus('offline');
-                    });
+                    }, (err) => { if (err.code === 'permission-denied') setSyncStatus('offline'); });
                 }
             }, [user]);
 
-            useEffect(() => { localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); }, [formData]);
+            useEffect(() => { 
+                if (view === VIEWS.WIZARD) localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); 
+            }, [formData, view]);
 
             // Speech
             const [isListening, setIsListening] = useState(false);
@@ -425,8 +431,7 @@
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SR) return;
                 const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'zh-TW';
-                r.onstart = () => setIsListening(true);
-                r.onend = () => setIsListening(false);
+                r.onstart = () => setIsListening(true); r.onend = () => setIsListening(false);
                 r.onresult = (e) => {
                     let f = ''; for(let i=e.resultIndex; i<e.results.length; ++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript;
                     if(f) setFormData(p => ({ ...p, narrative: (p.narrative || '') + f }));
@@ -434,7 +439,7 @@
                 recRef.current = r;
             }, []);
 
-            // --- Handlers ---
+            // Handlers
             const loginGoogle = async () => {
                 if (!authRef.current) return;
                 const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
@@ -454,131 +459,60 @@
             };
 
             const logout = () => window.firebaseModules.signOut(authRef.current).then(() => setUser(null));
-            
-            const selectMode = (isC) => { 
-                setFormData(prev => ({ ...prev, isChristianMode: isC })); 
-                setView(VIEWS.DASHBOARD); 
-            };
-
+            const selectMode = (isC) => { setFormData(prev => ({ ...prev, isChristianMode: isC })); setView(VIEWS.DASHBOARD); };
             const handleStartNewDream = () => {
                 const today = new Date().toISOString().split('T')[0];
                 setFormData({ ...INITIAL_STATE, id: Math.random().toString(), date: today, isChristianMode: formData.isChristianMode });
-                setCurrentStep(0);
-                setView(VIEWS.WIZARD);
-                setShowSummary(false);
+                setCurrentStep(0); setView(VIEWS.WIZARD); setShowSummary(false);
             };
-
             const handleDateSelect = (dateStr, entry) => { 
-                if (entry) { 
-                    setFormData(entry); 
-                    setShowSummary(true); 
-                } else { 
+                if (entry) { setFormData(entry); setShowSummary(true); } 
+                else { 
                     if (confirm(`創建 ${dateStr} 的新夢境？`)) {
                         setFormData({ ...INITIAL_STATE, id: Math.random().toString(), date: dateStr, isChristianMode: formData.isChristianMode }); 
-                        setCurrentStep(0); 
-                        setView(VIEWS.WIZARD);
-                        setShowSummary(false);
+                        setCurrentStep(0); setView(VIEWS.WIZARD); setShowSummary(false);
                     }
                 } 
             };
-
             const saveToHistory = async (data) => {
                 const updated = { ...history, [data.date]: data };
                 localStorage.setItem('soul_mirror_history', JSON.stringify(updated));
                 setHistory(updated);
-                
                 localStorage.removeItem('soul_mirror_draft_v2');
-
-                if (user && dbRef.current) {
-                    try { await window.firebaseModules.setDoc(window.firebaseModules.doc(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`, data.date), data); } catch(e) {}
-                }
-                
+                if (user && dbRef.current) { try { await window.firebaseModules.setDoc(window.firebaseModules.doc(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`, data.date), data); } catch(e) {} }
                 setDiagnosis({ title: '儲存完成', message: '已存入您的夢境日記並清除草稿。', type: 'success' });
-                setTimeout(() => {
-                    setDiagnosis({ title: '', message: '', type: '' });
-                    setView(VIEWS.DASHBOARD);
-                }, 1500);
+                setTimeout(() => { setDiagnosis({ title: '', message: '', type: '' }); setView(VIEWS.DASHBOARD); }, 1500);
             };
-
-            const handleEditFromSummary = () => {
-                setShowSummary(false);
-                setView(VIEWS.WIZARD);
-            };
-
+            const handleEditFromSummary = () => { setShowSummary(false); setView(VIEWS.WIZARD); };
             const toggleMood = (moodValue) => setFormData(p => ({ ...p, moods: p.moods.includes(moodValue) ? p.moods.filter(x => x !== moodValue) : [...p.moods, moodValue] }));
             const handleSaveSymbol = () => { if (!newSymbol.name) return; setFormData(p => ({ ...p, symbols: newSymbol.id ? p.symbols.map(s => s.id === newSymbol.id ? newSymbol : s) : [...p.symbols, { ...newSymbol, id: Date.now() }] })); setNewSymbol({ id: null, name: '', type: 'PERSON', q2: '', q3: '' }); setIsSymbolModalOpen(false); };
             const removeSymbol = (id) => setFormData(p => ({...p, symbols: p.symbols.filter(s => s.id !== id) }));
             const updateField = (f, v) => setFormData(p => ({...p, [f]: v}));
             const updateDiscernment = (f, v) => setFormData(p => ({...p, discernment: {...p.discernment, [f]: v}}));
             const updateIntegration = (f, v) => setFormData(p => ({...p, integration: {...p.integration, [f]: v}}));
-            
-            const handleExport = () => {
-                const blob = new Blob([JSON.stringify(formData, null, 2)], { type: "application/json" });
-                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `dream_${formData.date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            };
+            const handleExport = () => { const blob = new Blob([JSON.stringify(formData, null, 2)], { type: "application/json" }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `dream_${formData.date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
             const handleImportClick = () => fileInputRef.current.click();
-            const handleFileChange = (e) => {
-                const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
-                reader.onload = (evt) => { try { const data = JSON.parse(evt.target.result); setFormData(data); setDiagnosis({ title: '匯入成功', message: '已載入備份', type: 'success' }); } catch (err) { setDiagnosis({ title: '匯入失敗', message: '格式錯誤', type: 'error' }); } e.target.value = ''; };
-                reader.readAsText(file);
-            };
+            const handleFileChange = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (evt) => { try { const data = JSON.parse(evt.target.result); setFormData(data); setDiagnosis({ title: '匯入成功', message: '已載入備份', type: 'success' }); } catch (err) { setDiagnosis({ title: '匯入失敗', message: '格式錯誤', type: 'error' }); } e.target.value = ''; }; reader.readAsText(file); };
 
             const handlePrint = () => {
                 setIsPrinting(true);
-                // 延遲執行列印，讓瀏覽器有時間渲染等待畫面
+                // Optimized delay: give DOM time to repaint, then print
                 setTimeout(() => {
                     window.print();
-                    setIsPrinting(false);
-                }, 800);
+                    // Add listener to remove overlay after print dialog closes
+                    window.addEventListener('afterprint', () => setIsPrinting(false), { once: true });
+                }, 100);
             };
 
-            // --- Render Logic ---
-
-            // 1. Dashboard View
-            const renderDashboard = () => (
-                <div className="flex flex-col items-center justify-center h-full animate-fadeIn py-10">
-                    <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mb-6 shadow-xl"><Icons.Moon className="text-amber-400" size={32} /></div>
-                    <h2 className="text-3xl font-serif text-amber-100 mb-2">早安，旅人</h2>
-                    <p className="text-slate-400 mb-10">準備好探索今天的夢境了嗎？</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-                        <button onClick={handleStartNewDream} className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-4 hover:border-amber-500/50 transition-all hover:scale-[1.02] group">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-amber-600 transition-colors"><Icons.Pencil size={24} className="text-slate-300 group-hover:text-white"/></div>
-                            <div className="text-center">
-                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-amber-400">寫下今天的夢</h3>
-                                <p className="text-sm text-slate-500 mt-2">捕捉稍縱即逝的直覺與畫面</p>
-                            </div>
-                        </button>
-
-                        <button onClick={() => setIsCalendarOpen(true)} className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-4 hover:border-blue-500/50 transition-all hover:scale-[1.02] group">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-blue-600 transition-colors"><Icons.Calendar size={24} className="text-slate-300 group-hover:text-white"/></div>
-                            <div className="text-center">
-                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-blue-400">時光迴廊</h3>
-                                <p className="text-sm text-slate-500 mt-2">查看或補寫過去的夢境紀錄</p>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            );
-
-            // 2. Wizard Views
+            // --- Render Steps ---
             const renderStep1 = () => (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 1: 捕捉直覺</h3></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div><Label>日期</Label><input type="date" className="glass-input" value={formData.date} onChange={(e) => updateField('date', e.target.value)} /></div>
-                        <div className="md:col-span-2"><Label>標題</Label><input className="glass-input" placeholder="夢境標題..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} /></div>
-                    </div>
-                    <div><Label>敘事 (現在式)</Label>
-                        <div className="relative">
-                            <textarea className="glass-input" rows={10} placeholder="我正處於..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} />
-                            <button onClick={() => isListening ? recRef.current.stop() : recRef.current.start()} className={`absolute bottom-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-700/80 hover:bg-slate-600'}`}>{isListening ? '🛑 停止' : '🎙️ 語音'}</button>
-                        </div>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div><Label>日期</Label><input type="date" className="glass-input" value={formData.date} onChange={(e) => updateField('date', e.target.value)} /></div><div className="md:col-span-2"><Label>標題</Label><input className="glass-input" placeholder="夢境標題..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} /></div></div>
+                    <div><Label>敘事 (現在式)</Label><div className="relative"><textarea className="glass-input" rows={10} placeholder="我正處於..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} /><button onClick={() => isListening ? recRef.current.stop() : recRef.current.start()} className={`absolute bottom-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-700/80 hover:bg-slate-600'}`}>{isListening ? '🛑 停止' : '🎙️ 語音'}</button></div></div>
                     <div><Label>情緒</Label><div className="flex flex-wrap gap-2 mt-2">{MOOD_OPTIONS.map((m) => (<button key={m.value} onClick={() => toggleMood(m.value)} className={`px-3 py-1 rounded-full text-xs border transition-all ${formData.moods.includes(m.value) ? m.color : 'border-slate-700 text-slate-500'}`}>{m.label}</button>))}</div></div>
                 </div>
             );
-
             const renderStep2 = () => {
                 const isC = formData.isChristianMode;
                 const getQ = (t) => {
@@ -595,33 +529,8 @@
                 return (
                     <div className="space-y-6 animate-fadeIn">
                         <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 2: 挖掘象徵</h3></div>
-                        <div className="space-y-4">
-                            {formData.symbols.map(s => (
-                                <div key={s.id} className="glass-panel p-4 rounded-xl border border-slate-700 flex justify-between items-start">
-                                    <div className="flex-1"><div className="flex gap-2 items-center mb-2"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-900/30 text-amber-400">{s.type}</span><h4 className="font-bold">{s.name}</h4></div><p className="text-sm text-slate-400">{s.q2}</p></div>
-                                    <div className="flex gap-2 ml-4">
-                                        <button onClick={()=>{setNewSymbol(s);setIsSymbolModalOpen(true);}} className="text-slate-400 hover:text-amber-400"><Icons.Pencil size={18}/></button>
-                                        <button onClick={()=>removeSymbol(s.id)} className="text-red-400"><Icons.Trash2 size={18}/></button>
-                                    </div>
-                                </div>
-                            ))}
-                            <button onClick={()=>{setIsSymbolModalOpen(true);}} className="w-full py-8 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-800/20"><Icons.Plus size={24} /><span>挖掘新元素</span></button>
-                        </div>
-                        {isSymbolModalOpen && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-                                <div className="glass-panel w-full max-w-2xl p-6 rounded-2xl relative animate-slideUp">
-                                    <button onClick={()=>setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24}/></button>
-                                    <h3 className="text-xl font-serif text-amber-500 mb-6 flex gap-2"><Icons.Search size={20}/>挖掘象徵</h3>
-                                    <div className="space-y-6">
-                                        <div><Label>類型</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{SYMBOL_TYPES.map(t=>(<button key={t.value} onClick={()=>setNewSymbol(p=>({...p, type:t.value}))} className={`p-2 text-xs rounded border transition-all ${newSymbol.type===t.value ? 'bg-amber-900 border-amber-500' : 'border-slate-700'}`}>{t.label}</button>))}</div></div>
-                                        <div><Label>{q.l1}</Label><input className="glass-input" value={newSymbol.name} onChange={e=>setNewSymbol(p=>({...p, name:e.target.value}))} /></div>
-                                        <div><Label>{q.l2}</Label><textarea className="glass-input" rows={3} value={newSymbol.q2} onChange={e=>setNewSymbol(p=>({...p, q2:e.target.value}))} /></div>
-                                        {q.l3 && <div><Label>{q.l3}</Label><textarea className="glass-input" rows={3} value={newSymbol.q3} onChange={e=>setNewSymbol(p=>({...p, q3:e.target.value}))} /></div>}
-                                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={()=>setIsSymbolModalOpen(false)}>取消</button><button onClick={handleSaveSymbol} className="bg-amber-600 text-slate-900 px-6 py-2 rounded-lg font-bold">儲存</button></div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <div className="space-y-4">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-xl border border-slate-700 flex justify-between items-start"><div className="flex-1"><div className="flex gap-2 items-center mb-2"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-900/30 text-amber-400">{s.type}</span><h4 className="font-bold">{s.name}</h4></div><p className="text-sm text-slate-400">{s.q2}</p></div><div className="flex gap-2 ml-4"><button onClick={()=>{setNewSymbol(s);setIsSymbolModalOpen(true);}}><Icons.Pencil size={18}/></button><button onClick={()=>removeSymbol(s.id)} className="text-red-400"><Icons.Trash2 size={18}/></button></div></div>))}<button onClick={()=>{setIsSymbolModalOpen(true);}} className="w-full py-8 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-800/20"><Icons.Plus size={24} /><span>挖掘新元素</span></button></div>
+                        {isSymbolModalOpen && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md"><div className="glass-panel w-full max-w-2xl p-6 rounded-2xl relative animate-slideUp"><button onClick={()=>setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24}/></button><h3 className="text-xl font-serif text-amber-500 mb-6 flex gap-2"><Icons.Search size={20}/>挖掘象徵</h3><div className="space-y-6"><div><Label>類型</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{SYMBOL_TYPES.map(t=>(<button key={t.value} onClick={()=>setNewSymbol(p=>({...p, type:t.value}))} className={`p-2 text-xs rounded border transition-all ${newSymbol.type===t.value ? 'bg-amber-900 border-amber-500' : 'border-slate-700'}`}>{t.label}</button>))}</div></div><div><Label>{q.l1}</Label><input className="glass-input" value={newSymbol.name} onChange={e=>setNewSymbol(p=>({...p, name:e.target.value}))} /></div><div><Label>{q.l2}</Label><textarea className="glass-input" rows={3} value={newSymbol.q2} onChange={e=>setNewSymbol(p=>({...p, q2:e.target.value}))} /></div>{q.l3 && <div><Label>{q.l3}</Label><textarea className="glass-input" rows={3} value={newSymbol.q3} onChange={e=>setNewSymbol(p=>({...p, q3:e.target.value}))} /></div>}<div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={()=>setIsSymbolModalOpen(false)}>取消</button><button onClick={handleSaveSymbol} className="bg-amber-600 text-slate-900 px-6 py-2 rounded-lg font-bold">儲存</button></div></div></div></div>)}
                     </div>
                 );
             };
@@ -629,24 +538,18 @@
             const renderStep3 = () => (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 3: 分辨與感受</h3></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div><Label>醒後情緒</Label><input className="glass-input" placeholder="醒來第一個感覺..." value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div>
-                        <div><Label>身體感受</Label><input className="glass-input" placeholder="身體反應在哪？" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div>
-                    </div>
-                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 backdrop-blur-sm">
-                        <Label hint={formData.isChristianMode ? "這是來自『控告』還是『聖靈』？" : "這是來自『內在批判』還是『成長動力』？"}>{formData.isChristianMode ? "屬靈分辨" : "內在分辨"}</Label>
-                        <textarea className="glass-input" rows={5} value={formData.discernment.theological_reflection} onChange={e=>updateDiscernment('theological_reflection', e.target.value)} />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8"><div><Label>醒後情緒</Label><input className="glass-input" value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div><div><Label>身體感受</Label><input className="glass-input" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div></div>
+                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 backdrop-blur-sm"><Label hint={formData.isChristianMode ? "來自控告還是聖靈？" : "自我批判還是成長動力？"}>{formData.isChristianMode ? "屬靈分辨" : "內在分辨"}</Label><textarea className="glass-input" rows={5} value={formData.discernment.theological_reflection} onChange={e=>updateDiscernment('theological_reflection', e.target.value)} /></div>
                 </div>
             );
 
             const renderStep4 = () => (
                 <div className="space-y-8 animate-fadeIn h-full flex flex-col">
-                    <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 4: 整合與承諾</h3></div>
+                    <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 flex-shrink-0"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 4: 整合與承諾</h3></div>
                     <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
                         <div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>
                         {formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}
-                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
+                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
                         <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
                     </div>
                 </div>
@@ -657,21 +560,12 @@
                     <div className="max-w-4xl mx-auto">
                         <div className="flex justify-between items-center mb-8 border-b border-slate-700/50 pb-4">
                             <div><h2 className="text-3xl text-amber-500 font-serif">夢境紀錄卡</h2><p className="text-slate-500">{formData.date} | {formData.title}</p></div>
-                            <div className="flex gap-3 no-print">
-                                <button onClick={handleEditFromSummary} className="text-slate-400 hover:text-white px-4 py-2 font-medium">返回編輯</button>
-                                <button onClick={handlePrint} className="bg-amber-600 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg flex items-center gap-1"><Icons.Printer size={18} /> 列印 / 另存 PDF</button>
-                            </div>
+                            <div className="flex gap-3 no-print"><button onClick={handleEditFromSummary} className="text-slate-400 hover:text-white px-4 py-2 font-medium">返回編輯</button><button onClick={handlePrint} className="bg-amber-600 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg flex items-center gap-1"><Icons.Printer size={18} /> 列印 / 另存 PDF</button></div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <section className="glass-panel p-6 rounded-xl space-y-4">
-                                <h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest">夢境敘事</h3>
-                                <p className="text-slate-200 whitespace-pre-wrap leading-relaxed font-serif text-lg">{formData.narrative || "尚無紀錄"}</p>
-                            </section>
+                            <section className="glass-panel p-6 rounded-xl space-y-4"><h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest">夢境敘事</h3><p className="text-slate-200 whitespace-pre-wrap leading-relaxed font-serif text-lg">{formData.narrative || "尚無紀錄"}</p></section>
                             <section className="space-y-6">
-                                <div className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20">
-                                    <h3 className="text-amber-500 text-xs font-bold mb-4 uppercase">整合啟示</h3>
-                                    <p className="font-serif text-xl italic text-slate-100">"{formData.integration.message_to_self || '...'}"</p>
-                                </div>
+                                <div className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20"><h3 className="text-amber-500 text-xs font-bold mb-4 uppercase">整合啟示</h3><p className="font-serif text-xl italic text-slate-100">"{formData.integration.message_to_self || '...'}"</p></div>
                                 <div className="space-y-3">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-lg text-sm border border-white/5"><span className="text-amber-500 font-bold">{s.name}</span>: {s.q2}</div>))}</div>
                             </section>
                         </div>
@@ -683,10 +577,8 @@
             return (
                 <>
                     <DreamBackground />
-                    {isPrinting && <PrintingOverlay />}
+                    {isPrinting && <PrintingOverlay onClose={() => setIsPrinting(false)} />}
                     <div className="max-w-4xl mx-auto min-h-screen flex flex-col p-4 md:p-8 relative z-10">
-                        
-                        {/* Header */}
                         <header className="flex flex-col gap-4 mb-8 pt-4">
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                                 <button onClick={() => setView(VIEWS.WELCOME)} className="flex items-center gap-3 text-left hover:opacity-80 transition-all group">
@@ -703,7 +595,7 @@
                                 </div>
                             </div>
                             
-                            {/* Toolbar (Only show in Dashboard or Wizard) */}
+                            {/* Toolbar */}
                             {view !== VIEWS.WELCOME && (
                                 <div className="flex flex-col md:flex-row items-center justify-between glass-panel p-2 rounded-xl gap-2 no-print mb-8">
                                     <div className="flex-1 text-center md:text-left">{(!user || user.isAnonymous) && (<div className="flex items-center justify-center md:justify-start gap-2 text-amber-400/80 text-[10px] px-2"><Icons.AlertTriangle size={12} /><span>未登入：資料暫存本機</span></div>)}</div>
@@ -725,7 +617,7 @@
                                     <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"><Icons.Moon className="text-amber-400" size={32} /></div>
                                     <h2 className="text-2xl font-serif text-amber-100 mb-6 drop-shadow-md">歡迎來到靈魂之鏡</h2>
                                     <blockquote className="text-slate-300 italic mb-10 border-l-2 border-amber-500/50 pl-4 text-left leading-relaxed">
-                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著尋找答案，試著與意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
+                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著尋找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
                                         <footer className="mt-2 text-sm text-amber-400/80 text-right">— 陪你穿越夢境的夥伴 Anne</footer>
                                     </blockquote>
                                     <div className="flex flex-col gap-4">
