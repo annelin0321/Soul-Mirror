@@ -59,12 +59,52 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 10px; }
 
+        /* --- 🖨️ PRINT STYLES --- */
         @media print {
-            body * { visibility: hidden; }
-            #summary-view, #summary-view * { visibility: visible; }
-            body, #summary-view { background-color: white !important; color: black !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; overflow: visible !important; }
-            .no-print { display: none !important; }
-            .glass-panel { background: white !important; border: 1px solid #ddd !important; box-shadow: none !important; backdrop-filter: none !important; }
+            body {
+                background-color: white !important;
+                background-image: none !important;
+                color: black !important;
+                overflow: visible !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .print-hidden { display: none !important; }
+            .no-print, header, footer, button, .fixed, .bg-decoration { display: none !important; }
+
+            #summary-view {
+                display: block !important;
+                position: static !important;
+                overflow: visible !important;
+                height: auto !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                inset: auto !important;
+                transform: none !important;
+                z-index: 9999 !important;
+            }
+
+            #summary-view .max-w-4xl { max-width: 100% !important; padding: 0 20px !important; margin: 0 !important; }
+            #summary-view * { visibility: visible !important; color: black !important; }
+
+            .glass-panel {
+                background: white !important;
+                border: 1px solid #ccc !important;
+                border-radius: 8px !important;
+                margin-bottom: 20px !important;
+                padding: 15px !important;
+                page-break-inside: avoid;
+            }
+            
+            .text-amber-500, .text-amber-400, .text-amber-100 { color: #000 !important; font-weight: bold !important; }
+            .text-slate-500, .text-slate-400, .text-slate-300 { color: #333 !important; }
+            .text-purple-300, .text-purple-400 { color: #444 !important; font-style: italic; }
+
+            .grid { display: block !important; }
+            .md\:grid-cols-2 { display: block !important; }
         }
     </style>
 </head>
@@ -79,7 +119,7 @@
         // ==========================================
         
         const MANUAL_FIREBASE_CONFIG = { 
-            apiKey: "AIzaSyAgc3maS_-9iEvvbvo4ozIaHCCFrGxaLDQ", 
+            apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I", 
             authDomain: "soul-mirror-999e5.firebaseapp.com", 
             projectId: "soul-mirror-999e5", 
             storageBucket: "soul-mirror-999e5.firebasestorage.app", 
@@ -302,30 +342,25 @@
         // ==========================================
 
         function App() {
-            // View State: 'WELCOME' | 'DASHBOARD' | 'WIZARD'
             const [view, setView] = useState(VIEWS.WELCOME);
             const [currentStep, setCurrentStep] = useState(0);
             const [formData, setFormData] = useState(INITIAL_STATE);
             
-            // Modal States
             const [isSymbolModalOpen, setIsSymbolModalOpen] = useState(false);
             const [isCalendarOpen, setIsCalendarOpen] = useState(false);
             const [showSummary, setShowSummary] = useState(false);
             const [isPrinting, setIsPrinting] = useState(false);
             
-            // Core States
             const [user, setUser] = useState(null);
             const [syncStatus, setSyncStatus] = useState('offline');
             const [history, setHistory] = useState({});
             const [diagnosis, setDiagnosis] = useState({ title: '', message: '', type: '', domain: '' });
             
-            // Refs
             const dbRef = useRef(null);
             const authRef = useRef(null);
             const fileInputRef = useRef(null);
             const [newSymbol, setNewSymbol] = useState({ id: null, name: '', type: 'PERSON', q2: '', q3: '' });
 
-            // Initialization
             useEffect(() => {
                 if (!window.firebaseModules) return;
                 const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore } = window.firebaseModules;
@@ -346,20 +381,16 @@
                 
                 const localH = JSON.parse(localStorage.getItem('soul_mirror_history') || '{}');
                 setHistory(localH);
-                // Clear old draft to avoid stuck state
                 localStorage.removeItem('soul_mirror_draft_v2');
             }, []);
 
-            // Sync History
             useEffect(() => {
                 if (user && dbRef.current && window.firebaseModules) {
                     const { collection, onSnapshot } = window.firebaseModules;
                     return onSnapshot(collection(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`), (snap) => {
                         const cloud = {}; snap.forEach(doc => { const d = doc.data(); if(d.date) cloud[d.date] = d; });
                         setHistory(prev => ({ ...prev, ...cloud }));
-                    }, (err) => {
-                        if (err.code === 'permission-denied') setSyncStatus('offline');
-                    });
+                    }, (err) => { if (err.code === 'permission-denied') setSyncStatus('offline'); });
                 }
             }, [user]);
 
@@ -367,22 +398,41 @@
                 if (view === VIEWS.WIZARD) localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); 
             }, [formData, view]);
 
-            // Speech
-            const [isListening, setIsListening] = useState(false);
-            const recRef = useRef(null);
-            useEffect(() => {
-                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SR) return;
-                const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'zh-TW';
-                r.onstart = () => setIsListening(true); r.onend = () => setIsListening(false);
-                r.onresult = (e) => {
-                    let f = ''; for(let i=e.resultIndex; i<e.results.length; ++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript;
-                    if(f) setFormData(p => ({ ...p, narrative: (p.narrative || '') + f }));
-                };
-                recRef.current = r;
-            }, []);
+            const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechRecognition();
 
-            // --- Handlers ---
+            // Speech Recognition
+            function useSpeechRecognition() {
+                const [isListening, setIsListening] = useState(false);
+                const [transcript, setTranscript] = useState('');
+                const recRef = useRef(null);
+
+                useEffect(() => {
+                    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (!SR) return;
+                    const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'zh-TW';
+                    r.onstart = () => setIsListening(true);
+                    r.onend = () => setIsListening(false);
+                    r.onresult = (e) => {
+                        let f = ''; for(let i=e.resultIndex; i<e.results.length; ++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript;
+                        if(f) setTranscript(p => p + f);
+                    };
+                    recRef.current = r;
+                }, []);
+                
+                const start = () => recRef.current?.start();
+                const stop = () => recRef.current?.stop();
+                const reset = () => setTranscript('');
+
+                return { isListening, transcript, startListening: start, stopListening: stop, resetTranscript: reset };
+            }
+
+            useEffect(() => {
+                if (transcript) {
+                    setFormData(prev => ({ ...prev, narrative: (prev.narrative || '') + transcript }));
+                    resetTranscript();
+                }
+            }, [transcript]);
+
             const loginGoogle = async () => {
                 if (!authRef.current) return;
                 const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
@@ -402,60 +452,31 @@
             };
 
             const logout = () => window.firebaseModules.signOut(authRef.current).then(() => setUser(null));
-            
-            const selectMode = (isC) => { 
-                setFormData(prev => ({ ...prev, isChristianMode: isC })); 
-                setView(VIEWS.DASHBOARD); 
-            };
-
+            const selectMode = (isC) => { setFormData(prev => ({ ...prev, isChristianMode: isC })); setView(VIEWS.DASHBOARD); };
             const handleStartNewDream = () => {
                 const today = new Date().toISOString().split('T')[0];
                 setFormData({ ...INITIAL_STATE, id: Math.random().toString(), date: today, isChristianMode: formData.isChristianMode });
-                setCurrentStep(0);
-                setView(VIEWS.WIZARD);
-                setShowSummary(false);
+                setCurrentStep(0); setView(VIEWS.WIZARD); setShowSummary(false);
             };
-
             const handleDateSelect = (dateStr, entry) => { 
-                if (entry) { 
-                    setFormData(entry); 
-                    setShowSummary(true); 
-                } else { 
+                if (entry) { setFormData(entry); setShowSummary(true); } 
+                else { 
                     if (confirm(`創建 ${dateStr} 的新夢境？`)) {
                         setFormData({ ...INITIAL_STATE, id: Math.random().toString(), date: dateStr, isChristianMode: formData.isChristianMode }); 
-                        setCurrentStep(0); 
-                        setView(VIEWS.WIZARD);
-                        setShowSummary(false);
+                        setCurrentStep(0); setView(VIEWS.WIZARD); setShowSummary(false);
                     }
                 } 
             };
-
             const saveToHistory = async (data) => {
                 const updated = { ...history, [data.date]: data };
                 localStorage.setItem('soul_mirror_history', JSON.stringify(updated));
                 setHistory(updated);
-                
-                // Clear draft to fix persistence bug
                 localStorage.removeItem('soul_mirror_draft_v2');
-
-                if (user && dbRef.current) {
-                    try { await window.firebaseModules.setDoc(window.firebaseModules.doc(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`, data.date), data); } catch(e) {}
-                }
-                
+                if (user && dbRef.current) { try { await window.firebaseModules.setDoc(window.firebaseModules.doc(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`, data.date), data); } catch(e) {} }
                 setDiagnosis({ title: '儲存完成', message: '已存入您的夢境日記並清除草稿。', type: 'success' });
-                // Return to Dashboard
-                setTimeout(() => {
-                    setDiagnosis({ title: '', message: '', type: '' }); // Close modal
-                    setView(VIEWS.DASHBOARD);
-                }, 1500);
+                setTimeout(() => { setDiagnosis({ title: '', message: '', type: '' }); setView(VIEWS.DASHBOARD); }, 1500);
             };
-
-            const handleEditFromSummary = () => {
-                setShowSummary(false);
-                setView(VIEWS.WIZARD);
-            };
-
-            // ... (Other helpers: toggleMood, handleSaveSymbol, etc. same as before) ...
+            const handleEditFromSummary = () => { setShowSummary(false); setView(VIEWS.WIZARD); };
             const toggleMood = (moodValue) => setFormData(p => ({ ...p, moods: p.moods.includes(moodValue) ? p.moods.filter(x => x !== moodValue) : [...p.moods, moodValue] }));
             const handleSaveSymbol = () => { if (!newSymbol.name) return; setFormData(p => ({ ...p, symbols: newSymbol.id ? p.symbols.map(s => s.id === newSymbol.id ? newSymbol : s) : [...p.symbols, { ...newSymbol, id: Date.now() }] })); setNewSymbol({ id: null, name: '', type: 'PERSON', q2: '', q3: '' }); setIsSymbolModalOpen(false); };
             const removeSymbol = (id) => setFormData(p => ({...p, symbols: p.symbols.filter(s => s.id !== id) }));
@@ -476,91 +497,31 @@
 
             const handlePrint = () => {
                 setIsPrinting(true);
-                // Create an iframe to print
-                const iframe = document.createElement('iframe');
-                iframe.style.position = 'absolute';
-                iframe.style.width = '0px';
-                iframe.style.height = '0px';
-                iframe.style.border = 'none';
-                document.body.appendChild(iframe);
-
-                const content = document.getElementById('summary-view').innerHTML;
-                const doc = iframe.contentWindow.document;
-                
-                doc.open();
-                doc.write('<html><head><title>夢境紀錄</title>');
-                // Split script tag to avoid parser error
-                doc.write('<script src="https://cdn.tailwindcss.com"><\/script>');
-                doc.write('<style>');
-                doc.write(`
-                    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
-                    body { font-family: 'Noto Sans TC', sans-serif; padding: 20px; }
-                    .font-serif { font-family: 'Noto Serif TC', serif; }
-                    .glass-panel { border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
-                    .text-slate-500 { color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
-                    .text-slate-200, .text-slate-300 { color: #000; line-height: 1.6; }
-                    .text-amber-500 { color: #000; font-size: 1.5rem; font-family: 'Noto Serif TC', serif; margin-bottom: 5px; font-weight: bold; }
-                    .text-purple-300, .text-purple-400 { color: #444; font-style: italic; margin-top: 5px; display: block; }
-                    .no-print, button { display: none !important; }
-                `);
-                doc.write('</style></head><body>');
-                doc.write(content);
-                doc.write('</body></html>');
-                doc.close();
-
-                // Wait for Tailwind to parse and apply
                 setTimeout(() => {
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    // Cleanup
-                    document.body.removeChild(iframe);
-                    setIsPrinting(false);
-                }, 1500); 
+                    window.print();
+                    window.addEventListener('afterprint', () => setIsPrinting(false), { once: true });
+                }, 800);
             };
 
             // --- Render Logic ---
 
-            // 1. Dashboard View
             const renderDashboard = () => (
                 <div className="flex flex-col items-center justify-center h-full animate-fadeIn py-10">
                     <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mb-6 shadow-xl"><Icons.Moon className="text-amber-400" size={32} /></div>
                     <h2 className="text-3xl font-serif text-amber-100 mb-2">早安，旅人</h2>
                     <p className="text-slate-400 mb-10">準備好探索今天的夢境了嗎？</p>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-                        <button onClick={handleStartNewDream} className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-4 hover:border-amber-500/50 transition-all hover:scale-[1.02] group">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-amber-600 transition-colors"><Icons.Pencil size={24} className="text-slate-300 group-hover:text-white"/></div>
-                            <div className="text-center">
-                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-amber-400">寫下今天的夢</h3>
-                                <p className="text-sm text-slate-500 mt-2">捕捉稍縱即逝的直覺與畫面</p>
-                            </div>
-                        </button>
-
-                        <button onClick={() => setIsCalendarOpen(true)} className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-4 hover:border-blue-500/50 transition-all hover:scale-[1.02] group">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-blue-600 transition-colors"><Icons.Calendar size={24} className="text-slate-300 group-hover:text-white"/></div>
-                            <div className="text-center">
-                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-blue-400">時光迴廊</h3>
-                                <p className="text-sm text-slate-500 mt-2">查看或補寫過去的夢境紀錄</p>
-                            </div>
-                        </button>
+                        <button onClick={handleStartNewDream} className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-4 hover:border-amber-500/50 transition-all hover:scale-[1.02] group"><div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-amber-600 transition-colors"><Icons.Pencil size={24} className="text-slate-300 group-hover:text-white"/></div><div className="text-center"><h3 className="text-xl font-bold text-slate-200 group-hover:text-amber-400">寫下今天的夢</h3><p className="text-sm text-slate-500 mt-2">捕捉稍縱即逝的直覺與畫面</p></div></button>
+                        <button onClick={() => setIsCalendarOpen(true)} className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-4 hover:border-blue-500/50 transition-all hover:scale-[1.02] group"><div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-blue-600 transition-colors"><Icons.Calendar size={24} className="text-slate-300 group-hover:text-white"/></div><div className="text-center"><h3 className="text-xl font-bold text-slate-200 group-hover:text-blue-400">時光迴廊</h3><p className="text-sm text-slate-500 mt-2">查看或補寫過去的夢境紀錄</p></div></button>
                     </div>
                 </div>
             );
 
-            // 2. Wizard Views
             const renderStep1 = () => (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 1: 捕捉直覺</h3></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div><Label>日期</Label><input type="date" className="glass-input" value={formData.date} onChange={(e) => updateField('date', e.target.value)} /></div>
-                        <div className="md:col-span-2"><Label>標題</Label><input className="glass-input" placeholder="夢境標題..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} /></div>
-                    </div>
-                    <div><Label>敘事 (現在式)</Label>
-                        <div className="relative">
-                            <textarea className="glass-input" rows={10} placeholder="我正處於..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} />
-                            <button onClick={() => isListening ? recRef.current.stop() : recRef.current.start()} className={`absolute bottom-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-700/80 hover:bg-slate-600'}`}>{isListening ? '🛑 停止' : '🎙️ 語音'}</button>
-                        </div>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div><Label>日期</Label><input type="date" className="glass-input" value={formData.date} onChange={(e) => updateField('date', e.target.value)} /></div><div className="md:col-span-2"><Label>標題</Label><input className="glass-input" placeholder="夢境標題..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} /></div></div>
+                    <div><Label>敘事 (現在式)</Label><div className="relative"><textarea className="glass-input" rows={10} placeholder="我正處於..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} /><button onClick={() => isListening ? stopListening() : startListening()} className={`absolute bottom-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-700/80 hover:bg-slate-600'}`}>{isListening ? '🛑 停止' : '🎙️ 語音'}</button></div></div>
                     <div><Label>情緒</Label><div className="flex flex-wrap gap-2 mt-2">{MOOD_OPTIONS.map((m) => (<button key={m.value} onClick={() => toggleMood(m.value)} className={`px-3 py-1 rounded-full text-xs border transition-all ${formData.moods.includes(m.value) ? m.color : 'border-slate-700 text-slate-500'}`}>{m.label}</button>))}</div></div>
                 </div>
             );
@@ -581,33 +542,8 @@
                 return (
                     <div className="space-y-6 animate-fadeIn">
                         <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 2: 挖掘象徵</h3></div>
-                        <div className="space-y-4">
-                            {formData.symbols.map(s => (
-                                <div key={s.id} className="glass-panel p-4 rounded-xl border border-slate-700 flex justify-between items-start">
-                                    <div className="flex-1"><div className="flex gap-2 items-center mb-2"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-900/30 text-amber-400">{s.type}</span><h4 className="font-bold">{s.name}</h4></div><p className="text-sm text-slate-400">{s.q2}</p></div>
-                                    <div className="flex gap-2 ml-4">
-                                        <button onClick={()=>{setNewSymbol(s);setIsSymbolModalOpen(true);}} className="text-slate-400 hover:text-amber-400"><Icons.Pencil size={18}/></button>
-                                        <button onClick={()=>removeSymbol(s.id)} className="text-red-400"><Icons.Trash2 size={18}/></button>
-                                    </div>
-                                </div>
-                            ))}
-                            <button onClick={()=>{setIsSymbolModalOpen(true);}} className="w-full py-8 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-800/20"><Icons.Plus size={24} /><span>挖掘新元素</span></button>
-                        </div>
-                        {isSymbolModalOpen && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-                                <div className="glass-panel w-full max-w-2xl p-6 rounded-2xl relative animate-slideUp">
-                                    <button onClick={()=>setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24}/></button>
-                                    <h3 className="text-xl font-serif text-amber-500 mb-6 flex gap-2"><Icons.Search size={20}/>挖掘象徵</h3>
-                                    <div className="space-y-6">
-                                        <div><Label>類型</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{SYMBOL_TYPES.map(t=>(<button key={t.value} onClick={()=>setNewSymbol(p=>({...p, type:t.value}))} className={`p-2 text-xs rounded border transition-all ${newSymbol.type===t.value ? 'bg-amber-900 border-amber-500' : 'border-slate-700'}`}>{t.label}</button>))}</div></div>
-                                        <div><Label>{q.l1}</Label><input className="glass-input" value={newSymbol.name} onChange={e=>setNewSymbol(p=>({...p, name:e.target.value}))} /></div>
-                                        <div><Label>{q.l2}</Label><textarea className="glass-input" rows={3} value={newSymbol.q2} onChange={e=>setNewSymbol(p=>({...p, q2:e.target.value}))} /></div>
-                                        {q.l3 && <div><Label>{q.l3}</Label><textarea className="glass-input" rows={3} value={newSymbol.q3} onChange={e=>setNewSymbol(p=>({...p, q3:e.target.value}))} /></div>}
-                                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={()=>setIsSymbolModalOpen(false)}>取消</button><button onClick={handleSaveSymbol} className="bg-amber-600 text-slate-900 px-6 py-2 rounded-lg font-bold">儲存</button></div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <div className="space-y-4">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-xl border border-slate-700 flex justify-between items-start"><div className="flex-1"><div className="flex gap-2 items-center mb-2"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-900/30 text-amber-400">{s.type}</span><h4 className="font-bold">{s.name}</h4></div><p className="text-sm text-slate-400">{s.q2}</p></div><div className="flex gap-2 ml-4"><button onClick={()=>{setNewSymbol(s);setIsSymbolModalOpen(true);}}><Icons.Pencil size={18}/></button><button onClick={()=>removeSymbol(s.id)} className="text-red-400"><Icons.Trash2 size={18}/></button></div></div>))}<button onClick={()=>{setIsSymbolModalOpen(true);}} className="w-full py-8 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-800/20"><Icons.Plus size={24} /><span>挖掘新元素</span></button></div>
+                        {isSymbolModalOpen && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md"><div className="glass-panel w-full max-w-2xl p-6 rounded-2xl relative animate-slideUp"><button onClick={()=>setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24}/></button><h3 className="text-xl font-serif text-amber-500 mb-6 flex gap-2"><Icons.Search size={20}/>挖掘象徵</h3><div className="space-y-6"><div><Label>類型</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{SYMBOL_TYPES.map(t=>(<button key={t.value} onClick={()=>setNewSymbol(p=>({...p, type:t.value}))} className={`p-2 text-xs rounded border transition-all ${newSymbol.type===t.value ? 'bg-amber-900 border-amber-500' : 'border-slate-700'}`}>{t.label}</button>))}</div></div><div><Label>{q.l1}</Label><input className="glass-input" value={newSymbol.name} onChange={e=>setNewSymbol(p=>({...p, name:e.target.value}))} /></div><div><Label>{q.l2}</Label><textarea className="glass-input" rows={3} value={newSymbol.q2} onChange={e=>setNewSymbol(p=>({...p, q2:e.target.value}))} /></div>{q.l3 && <div><Label>{q.l3}</Label><textarea className="glass-input" rows={3} value={newSymbol.q3} onChange={e=>setNewSymbol(p=>({...p, q3:e.target.value}))} /></div>}<div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={()=>setIsSymbolModalOpen(false)}>取消</button><button onClick={handleSaveSymbol} className="bg-amber-600 text-slate-900 px-6 py-2 rounded-lg font-bold">儲存</button></div></div></div></div>)}
                     </div>
                 );
             };
@@ -615,26 +551,15 @@
             const renderStep3 = () => (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 3: 分辨與感受</h3></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div><Label>醒後情緒</Label><input className="glass-input" placeholder="醒來第一個感覺..." value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div>
-                        <div><Label>身體感受</Label><input className="glass-input" placeholder="身體反應在哪？" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div>
-                    </div>
-                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 backdrop-blur-sm">
-                        <Label hint={formData.isChristianMode ? "這是來自『控告』還是『聖靈』？" : "這是來自『內在批判』還是『成長動力』？"}>{formData.isChristianMode ? "屬靈分辨" : "內在分辨"}</Label>
-                        <textarea className="glass-input" rows={5} value={formData.discernment.theological_reflection} onChange={e=>updateDiscernment('theological_reflection', e.target.value)} />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8"><div><Label>醒後情緒</Label><input className="glass-input" placeholder="醒來第一個感覺..." value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div><div><Label>身體感受</Label><input className="glass-input" placeholder="身體反應在哪？" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div></div>
+                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 backdrop-blur-sm"><Label hint={formData.isChristianMode ? "來自控告還是聖靈？" : "自我批判還是成長動力？"}>{formData.isChristianMode ? "屬靈分辨" : "內在分辨"}</Label><textarea className="glass-input" rows={5} value={formData.discernment.theological_reflection} onChange={e=>updateDiscernment('theological_reflection', e.target.value)} /></div>
                 </div>
             );
 
             const renderStep4 = () => (
                 <div className="space-y-8 animate-fadeIn h-full flex flex-col">
-                    <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 4: 整合與承諾</h3></div>
-                    <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
-                        <div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>
-                        {formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}
-                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
-                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
-                    </div>
+                    <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 flex-shrink-0"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 4: 整合與承諾</h3></div>
+                    <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2"><div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>{formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}<div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div><div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div></div>
                 </div>
             );
 
@@ -651,16 +576,10 @@
                                     <h1 className="text-xl font-serif text-slate-100 tracking-wide drop-shadow-md">靈魂之鏡</h1>
                                 </button>
                                 <div className="flex items-center gap-3">
-                                    {syncStatus === 'synced' && <div className="px-3 py-1 rounded-full border border-blue-500/30 text-xs text-blue-400 flex items-center gap-1 bg-blue-500/10"><Icons.Cloud size={14} className="inline mr-1" /> 雲端連線</div>}
-                                    {user && !user.isAnonymous ? (
-                                        <div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-600" alt="Avatar" /><button onClick={logout} className="text-[10px]">登出</button></div>
-                                    ) : (
-                                        <button onClick={loginGoogle} className="bg-white/90 text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold active:scale-95 transition-all shadow-lg flex items-center gap-1"><Icons.LogIn size={14}/> Google 登入</button>
-                                    )}
+                                    {syncStatus === 'synced' && <div className="px-3 py-1 rounded-full border border-blue-500/30 text-xs text-blue-400 flex items-center gap-1 bg-blue-500/10"><Icons.Cloud size={14} /> 雲端連線</div>}
+                                    {user && !user.isAnonymous ? (<div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-600" alt="Avatar" /><button onClick={logout} className="text-[10px]">登出</button></div>) : (<button onClick={loginGoogle} className="bg-white/90 text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold active:scale-95 transition-all shadow-lg flex items-center gap-1"><Icons.LogIn size={14}/> Google 登入</button>)}
                                 </div>
                             </div>
-                            
-                            {/* Toolbar */}
                             {view !== VIEWS.WELCOME && (
                                 <div className="flex flex-col md:flex-row items-center justify-between glass-panel p-2 rounded-xl gap-2 no-print mb-8">
                                     <div className="flex-1 text-center md:text-left">{(!user || user.isAnonymous) && (<div className="flex items-center justify-center md:justify-start gap-2 text-amber-400/80 text-[10px] px-2"><Icons.AlertTriangle size={12} /><span>未登入：資料暫存本機</span></div>)}</div>
@@ -675,7 +594,6 @@
                             )}
                         </header>
 
-                        {/* VIEW CONTROLLER */}
                         {view === VIEWS.WELCOME && (
                             <div className="flex-1 flex items-center justify-center animate-fadeIn">
                                 <div className="glass-panel max-w-lg w-full p-8 rounded-2xl border-slate-600/50 shadow-2xl relative text-center">
