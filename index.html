@@ -62,12 +62,70 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 10px; }
 
+        /* --- 🖨️ PRINT STYLES --- */
         @media print {
-            body * { visibility: hidden; }
-            #summary-view, #summary-view * { visibility: visible; }
-            body, #summary-view { background-color: white !important; color: black !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; overflow: visible !important; }
-            .no-print { display: none !important; }
-            .glass-panel { background: white !important; border: 1px solid #ddd !important; box-shadow: none !important; backdrop-filter: none !important; }
+            body {
+                background-color: white !important;
+                background-image: none !important;
+                color: black !important;
+                overflow: visible !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Hide everything by default using our helper class */
+            .print-hidden {
+                display: none !important;
+            }
+            
+            /* Hide specific interactive elements */
+            .no-print, header, footer, button, .fixed {
+                display: none !important;
+            }
+
+            /* Force Summary View to be visible and flow naturally */
+            #summary-view {
+                display: block !important;
+                position: static !important;
+                overflow: visible !important;
+                height: auto !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                inset: auto !important;
+                transform: none !important;
+            }
+
+            /* Container adjustments */
+            #summary-view .max-w-4xl {
+                max-width: 100% !important;
+                padding: 0 20px !important;
+                margin: 0 !important;
+            }
+
+            /* Text Visibility Fixes */
+            #summary-view * {
+                color: black !important;
+                text-shadow: none !important;
+                border-color: #ccc !important;
+                visibility: visible !important;
+            }
+            
+            /* Remove glass effects for print */
+            .glass-panel {
+                background: white !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                margin-bottom: 20px !important;
+                page-break-inside: avoid;
+            }
+
+            /* Grid Fix */
+            .grid { display: block !important; }
+            .md\:grid-cols-2 { display: block !important; }
         }
     </style>
 </head>
@@ -223,6 +281,17 @@
             );
         }
 
+        // 列印等待遮罩組件
+        function PrintingOverlay() {
+            return (
+                <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn no-print">
+                    <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(245,158,11,0.5)]"></div>
+                    <h3 className="text-xl font-bold text-amber-100 font-serif">正在製作 PDF...</h3>
+                    <p className="text-slate-400 text-sm mt-2">將您的夢境編織成書，請稍候</p>
+                </div>
+            );
+        }
+
         function DiagnosisModal({ info, onClose }) {
             if (!info.message) return null;
             
@@ -282,7 +351,7 @@
         }
 
         // ==========================================
-        // 3. App Logic
+        // 3. 主應用程式 (App)
         // ==========================================
 
         function App() {
@@ -295,6 +364,7 @@
             const [isSymbolModalOpen, setIsSymbolModalOpen] = useState(false);
             const [isCalendarOpen, setIsCalendarOpen] = useState(false);
             const [showSummary, setShowSummary] = useState(false);
+            const [isPrinting, setIsPrinting] = useState(false); // New Printing State
             
             // Core States
             const [user, setUser] = useState(null);
@@ -327,12 +397,8 @@
                     });
                 } catch (e) { setSyncStatus('error'); }
                 
-                // Load Local History
                 const localH = JSON.parse(localStorage.getItem('soul_mirror_history') || '{}');
                 setHistory(localH);
-
-                // Load Draft Logic (Optional: Auto-load draft into Wizard if exists)
-                // We don't auto-navigate now, just prep data
                 const savedD = localStorage.getItem('soul_mirror_draft_v2');
                 if (savedD) { try { setFormData(prev => ({ ...JSON.parse(savedD), ...prev })); } catch (e) {} }
             }, []);
@@ -344,16 +410,13 @@
                     return onSnapshot(collection(dbRef.current, `artifacts/soul-mirror/users/${user.uid}/dreams`), (snap) => {
                         const cloud = {}; snap.forEach(doc => { const d = doc.data(); if(d.date) cloud[d.date] = d; });
                         setHistory(prev => ({ ...prev, ...cloud }));
-                    }, (err) => { if (err.code === 'permission-denied') setSyncStatus('offline'); });
+                    }, (err) => {
+                        if (err.code === 'permission-denied') setSyncStatus('offline');
+                    });
                 }
             }, [user]);
 
-            // Save Draft (Only when in Wizard)
-            useEffect(() => {
-                if (view === VIEWS.WIZARD) {
-                    localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData));
-                }
-            }, [formData, view]);
+            useEffect(() => { localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); }, [formData]);
 
             // Speech
             const [isListening, setIsListening] = useState(false);
@@ -362,7 +425,8 @@
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SR) return;
                 const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'zh-TW';
-                r.onstart = () => setIsListening(true); r.onend = () => setIsListening(false);
+                r.onstart = () => setIsListening(true);
+                r.onend = () => setIsListening(false);
                 r.onresult = (e) => {
                     let f = ''; for(let i=e.resultIndex; i<e.results.length; ++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript;
                     if(f) setFormData(p => ({ ...p, narrative: (p.narrative || '') + f }));
@@ -408,7 +472,6 @@
                 if (entry) { 
                     setFormData(entry); 
                     setShowSummary(true); 
-                    // Not setting view to wizard immediately, just showing summary over Dashboard
                 } else { 
                     if (confirm(`創建 ${dateStr} 的新夢境？`)) {
                         setFormData({ ...INITIAL_STATE, id: Math.random().toString(), date: dateStr, isChristianMode: formData.isChristianMode }); 
@@ -424,7 +487,6 @@
                 localStorage.setItem('soul_mirror_history', JSON.stringify(updated));
                 setHistory(updated);
                 
-                // Clear draft to fix persistence bug
                 localStorage.removeItem('soul_mirror_draft_v2');
 
                 if (user && dbRef.current) {
@@ -432,9 +494,8 @@
                 }
                 
                 setDiagnosis({ title: '儲存完成', message: '已存入您的夢境日記並清除草稿。', type: 'success' });
-                // Return to Dashboard
                 setTimeout(() => {
-                    setDiagnosis({ title: '', message: '', type: '' }); // Close modal
+                    setDiagnosis({ title: '', message: '', type: '' });
                     setView(VIEWS.DASHBOARD);
                 }, 1500);
             };
@@ -444,7 +505,6 @@
                 setView(VIEWS.WIZARD);
             };
 
-            // ... (Other helpers: toggleMood, handleSaveSymbol, etc. same as before) ...
             const toggleMood = (moodValue) => setFormData(p => ({ ...p, moods: p.moods.includes(moodValue) ? p.moods.filter(x => x !== moodValue) : [...p.moods, moodValue] }));
             const handleSaveSymbol = () => { if (!newSymbol.name) return; setFormData(p => ({ ...p, symbols: newSymbol.id ? p.symbols.map(s => s.id === newSymbol.id ? newSymbol : s) : [...p.symbols, { ...newSymbol, id: Date.now() }] })); setNewSymbol({ id: null, name: '', type: 'PERSON', q2: '', q3: '' }); setIsSymbolModalOpen(false); };
             const removeSymbol = (id) => setFormData(p => ({...p, symbols: p.symbols.filter(s => s.id !== id) }));
@@ -461,6 +521,15 @@
                 const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
                 reader.onload = (evt) => { try { const data = JSON.parse(evt.target.result); setFormData(data); setDiagnosis({ title: '匯入成功', message: '已載入備份', type: 'success' }); } catch (err) { setDiagnosis({ title: '匯入失敗', message: '格式錯誤', type: 'error' }); } e.target.value = ''; };
                 reader.readAsText(file);
+            };
+
+            const handlePrint = () => {
+                setIsPrinting(true);
+                // 延遲執行列印，讓瀏覽器有時間渲染等待畫面
+                setTimeout(() => {
+                    window.print();
+                    setIsPrinting(false);
+                }, 800);
             };
 
             // --- Render Logic ---
@@ -578,7 +647,7 @@
                         <div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>
                         {formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}
                         <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
-                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
+                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
                     </div>
                 </div>
             );
@@ -590,7 +659,7 @@
                             <div><h2 className="text-3xl text-amber-500 font-serif">夢境紀錄卡</h2><p className="text-slate-500">{formData.date} | {formData.title}</p></div>
                             <div className="flex gap-3 no-print">
                                 <button onClick={handleEditFromSummary} className="text-slate-400 hover:text-white px-4 py-2 font-medium">返回編輯</button>
-                                <button onClick={() => window.print()} className="bg-amber-600 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg"><Icons.Printer size={18} className="inline mr-1" /> 列印 PDF</button>
+                                <button onClick={handlePrint} className="bg-amber-600 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg flex items-center gap-1"><Icons.Printer size={18} /> 列印 / 另存 PDF</button>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -614,6 +683,7 @@
             return (
                 <>
                     <DreamBackground />
+                    {isPrinting && <PrintingOverlay />}
                     <div className="max-w-4xl mx-auto min-h-screen flex flex-col p-4 md:p-8 relative z-10">
                         
                         {/* Header */}
@@ -624,7 +694,7 @@
                                     <h1 className="text-xl font-serif text-slate-100 tracking-wide drop-shadow-md">靈魂之鏡</h1>
                                 </button>
                                 <div className="flex items-center gap-3">
-                                    {syncStatus === 'synced' && <div className="px-3 py-1 rounded-full border border-blue-500/30 text-xs text-blue-400 flex items-center gap-1 bg-blue-500/10"><Icons.Cloud size={14} /> 雲端連線</div>}
+                                    {syncStatus === 'synced' && <div className="px-3 py-1 rounded-full border border-blue-500/30 text-xs text-blue-400 flex items-center gap-1 bg-blue-500/10"><Icons.Cloud size={14} className="inline mr-1" /> 雲端連線</div>}
                                     {user && !user.isAnonymous ? (
                                         <div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-600" alt="Avatar" /><button onClick={logout} className="text-[10px]">登出</button></div>
                                     ) : (
