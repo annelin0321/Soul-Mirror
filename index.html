@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>靈魂之鏡：夢語聖所 Soul Mirror</title>
     
-    <!-- Icons: Will be dynamically updated to PNG by JS for better iOS support -->
+    <!-- Icons -->
     <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f59e0b'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" id="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f59e0b'/%3E%3C/svg%3E">
     
@@ -23,92 +23,44 @@
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Lucide Icons (Development Version for Browser) -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Firebase SDKs (Modular) -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, doc, setDoc, getDocs, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         window.firebaseModules = { 
-            initializeApp, 
-            getAuth, 
-            signInAnonymously, 
-            signInWithCustomToken,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signOut,
-            onAuthStateChanged, 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            onSnapshot, 
-            collection 
+            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getFirestore, doc, setDoc, getDocs, onSnapshot, collection 
         };
     </script>
 
-    <!-- Custom Font -->
+    <!-- Custom Font & Styles -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
         
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #0f172a;
-            overflow-x: hidden;
-        }
-        .font-serif {
-            font-family: 'Noto Serif TC', serif;
-        }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; overflow-x: hidden; }
+        .font-serif { font-family: 'Noto Serif TC', serif; }
         
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-        
-        @keyframes twinkle {
-            0% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0.3; transform: scale(0.8); }
-        }
-
-        @keyframes float {
-            0% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0px, 0px) scale(1); }
-        }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes twinkle { 0% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.3; transform: scale(0.8); } }
+        @keyframes float { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
 
         .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
         .animate-slideUp { animation: slideUp 0.5s ease-out forwards; }
         .animate-spin-slow { animation: spinSlow 3s linear infinite; }
         .animate-pulse-red { animation: pulse-red 2s infinite; }
         
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        .glass-input {
-            background: rgba(30, 41, 59, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(4px);
-            transition: all 0.3s ease;
-        }
-        .glass-input:focus {
-            background: rgba(30, 41, 59, 0.7);
-            border-color: rgba(245, 158, 11, 0.5);
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
-        }
+        /* Glassmorphism */
+        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
+        .glass-input { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); transition: all 0.3s ease; }
+        .glass-input:focus { background: rgba(30, 41, 59, 0.7); border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.1); }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -118,15 +70,8 @@
         @media print {
             body * { visibility: hidden; }
             #summary-view, #summary-view * { visibility: visible; }
-            body, #summary-view {
-                background-color: white !important;
-                background-image: none !important;
-                color: black !important;
-                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
-                overflow: visible !important;
-            }
-            .bg-decoration { display: none !important; }
-            .no-print { display: none !important; }
+            body, #summary-view { background-color: white !important; background-image: none !important; color: black !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; overflow: visible !important; }
+            .bg-decoration, .no-print { display: none !important; }
             .print-text-dark { color: #111827 !important; }
             .print-text-gray { color: #4b5563 !important; }
             .print-border { border-color: #e5e7eb !important; }
@@ -141,128 +86,57 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
+        const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- Icon Generator (Fix for iOS Home Screen) ---
+        // --- Helpers ---
         const generateAppIcon = () => {
             try {
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-
-                // 1. Background: Amber Gradient (Full Square for iOS)
-                const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-                gradient.addColorStop(0, '#f59e0b'); // amber-500
-                gradient.addColorStop(1, '#b45309'); // amber-700
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 512, 512); // iOS will round the corners automatically
-
-                // 2. Moon Icon (Centered)
-                ctx.fillStyle = 'white';
-                
-                ctx.save();
-                ctx.translate(256, 256); // Center
-                ctx.scale(15, 15);
-                ctx.translate(-12, -12); // Offset origin
-                const path = new Path2D('M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z');
-                ctx.fill(path);
-                ctx.restore();
-
+                const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512; const ctx = canvas.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 512, 512); gradient.addColorStop(0, '#f59e0b'); gradient.addColorStop(1, '#b45309');
+                ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
+                ctx.fillStyle = 'white'; ctx.save(); ctx.translate(256, 256); ctx.scale(15, 15); ctx.translate(-12, -12);
+                const path = new Path2D('M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'); ctx.fill(path); ctx.restore();
                 const dataUrl = canvas.toDataURL('image/png');
-                
-                // Update Link Tags
-                const favicon = document.getElementById('favicon');
-                const appleIcon = document.getElementById('apple-touch-icon');
-                if (favicon) favicon.href = dataUrl;
-                if (appleIcon) appleIcon.href = dataUrl;
-                
-            } catch (e) {
-                console.error("Icon generation failed", e);
-            }
+                const favicon = document.getElementById('favicon'); const appleIcon = document.getElementById('apple-touch-icon');
+                if (favicon) favicon.href = dataUrl; if (appleIcon) appleIcon.href = dataUrl;
+            } catch (e) { console.error(e); }
         };
 
-        // --- Background Component ---
         const DreamBackground = () => {
-            const stars = Array.from({ length: 50 }).map((_, i) => ({
-                id: i,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                size: `${Math.random() * 3}px`,
-                delay: `${Math.random() * 5}s`,
-                duration: `${3 + Math.random() * 4}s`
-            }));
-
+            const stars = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({ id: i, top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, size: `${Math.random()*3}px`, delay: `${Math.random()*5}s`, duration: `${3+Math.random()*4}s` })), []);
             return (
                 <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-decoration bg-slate-950">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black opacity-80"></div>
                     <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/30 rounded-full blur-[100px] animate-[float_20s_infinite_ease-in-out]"></div>
                     <div className="absolute bottom-[10%] right-[-5%] w-[400px] h-[400px] bg-amber-900/20 rounded-full blur-[80px] animate-[float_25s_infinite_ease-in-out_reverse]"></div>
                     <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-indigo-900/20 rounded-full blur-[90px] animate-[float_18s_infinite_ease-in-out_1s]"></div>
-                    {stars.map(star => (
-                        <div key={star.id} className="absolute bg-white rounded-full opacity-0"
-                            style={{ top: star.top, left: star.left, width: star.size, height: star.size, animation: `twinkle ${star.duration} ease-in-out infinite`, animationDelay: star.delay }}
-                        />
-                    ))}
+                    {stars.map(star => <div key={star.id} className="absolute bg-white rounded-full opacity-0" style={{ top: star.top, left: star.left, width: star.size, height: star.size, animation: `twinkle ${star.duration} ease-in-out infinite`, animationDelay: star.delay }} />)}
                 </div>
             );
         };
 
-        // --- Firebase Hook ---
+        // --- Firebase Hooks ---
         const useFirebaseSync = (localData, setLocalData) => {
-            const [status, setStatus] = useState('offline'); 
-            const [user, setUser] = useState(null);
-            const [errorMsg, setErrorMsg] = useState(''); 
-            const dbRef = useRef(null);
-            const unsubscribeRef = useRef(null);
-            const authRef = useRef(null);
+            const [status, setStatus] = useState('offline'); const [user, setUser] = useState(null); const [errorMsg, setErrorMsg] = useState(''); const dbRef = useRef(null); const unsubscribeRef = useRef(null); const authRef = useRef(null);
 
             useEffect(() => {
                 if (!window.firebaseModules) return;
                 const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, signInWithCustomToken } = window.firebaseModules;
-
-                const MANUAL_CONFIG = {
-                    apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I",
-                    authDomain: "soul-mirror-999e5.firebaseapp.com",
-                    projectId: "soul-mirror-999e5",
-                    storageBucket: "soul-mirror-999e5.firebasestorage.app",
-                    messagingSenderId: "978882078040",
-                    appId: "1:978882078040:web:8110f9b28158668fecb12d",
-                    measurementId: "G-L4XBYVJWYG"
-                };
-
-                // Use env config if available, else manual
-                const envConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : null;
-                const config = envConfig || MANUAL_CONFIG;
-
+                const MANUAL_CONFIG = { apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I", authDomain: "soul-mirror-999e5.firebaseapp.com", projectId: "soul-mirror-999e5", storageBucket: "soul-mirror-999e5.firebasestorage.app", messagingSenderId: "978882078040", appId: "1:978882078040:web:8110f9b28158668fecb12d", measurementId: "G-L4XBYVJWYG" };
+                const config = (typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : null) || MANUAL_CONFIG;
                 if (!config) return;
 
                 try {
-                    const app = initializeApp(config);
-                    const auth = getAuth(app);
-                    const db = getFirestore(app);
-                    dbRef.current = db;
-                    authRef.current = auth;
-
+                    const app = initializeApp(config); const auth = getAuth(app); const db = getFirestore(app);
+                    dbRef.current = db; authRef.current = auth;
                     onAuthStateChanged(auth, (u) => {
-                        if (u) {
-                            setUser(u);
-                            setStatus('synced');
-                        } else {
-                            signInAnonymously(auth).catch((err) => {
-                                console.warn("Anonymous auth failed", err);
-                                setStatus('offline');
-                            });
-                        }
+                        if (u) { setUser(u); setStatus('synced'); } 
+                        else { signInAnonymously(auth).catch((err) => { console.warn("Anon auth failed", err); setStatus('offline'); }); }
                     });
-                } catch (e) {
-                    console.error("Firebase Init Error", e);
-                    setStatus('error');
-                    setErrorMsg(`Init Error: ${e.message}`);
-                }
+                } catch (e) { console.error(e); setStatus('error'); setErrorMsg(`Init Error: ${e.message}`); }
             }, []);
 
+            // Draft Sync
             useEffect(() => {
                 if (!user || !dbRef.current || !window.firebaseModules) return;
                 const { doc, onSnapshot } = window.firebaseModules;
@@ -272,32 +146,22 @@
                 unsubscribeRef.current = onSnapshot(doc(dbRef.current, docPath), (docSnap) => {
                     if (docSnap.exists()) {
                         const cloudData = docSnap.data();
-                        if (JSON.stringify(cloudData) !== JSON.stringify(localData)) {
-                            setLocalData(prev => ({ ...prev, ...cloudData }));
-                        }
+                        if (JSON.stringify(cloudData) !== JSON.stringify(localData)) { setLocalData(prev => ({ ...prev, ...cloudData })); }
                     }
-                }, (error) => {
-                    setStatus('error');
-                    setErrorMsg(`Sync Error: ${error.message}`);
-                });
+                }, (error) => { setStatus('error'); setErrorMsg(`Sync Error: ${error.message}`); });
                 return () => { if (unsubscribeRef.current) unsubscribeRef.current(); };
             }, [user]); 
 
+            // Auto Save Draft
             useEffect(() => {
                 if (!user || !dbRef.current || !window.firebaseModules) return;
                 setStatus('syncing');
                 const { doc, setDoc } = window.firebaseModules;
                 const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'soul-mirror-default';
                 const docPath = `artifacts/${appId}/users/${user.uid}/drafts/current_v2`;
-
                 const timer = setTimeout(async () => {
-                    try {
-                        await setDoc(doc(dbRef.current, docPath), localData);
-                        setStatus('saved');
-                    } catch (err) {
-                        setStatus('error');
-                        setErrorMsg(`Save Error: ${err.message}`);
-                    }
+                    try { await setDoc(doc(dbRef.current, docPath), localData); setStatus('saved'); } 
+                    catch (err) { setStatus('error'); setErrorMsg(`Save Error: ${err.message}`); }
                 }, 1000); 
                 return () => clearTimeout(timer);
             }, [localData, user]);
@@ -305,503 +169,241 @@
             const loginGoogle = async () => {
                 if (!authRef.current || !window.firebaseModules) return;
                 const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
-                const provider = new GoogleAuthProvider();
-                try {
-                    await signInWithPopup(authRef.current, provider);
-                } catch (e) {
-                    setErrorMsg(`Login Error: ${e.message}`);
-                    alert("登入失敗: " + e.message);
-                }
+                try { await signInWithPopup(authRef.current, new GoogleAuthProvider()); } 
+                catch (e) { setErrorMsg(`Login Error: ${e.message}`); alert("登入失敗: " + e.message); }
             };
 
-            const logout = async () => {
-                 if (!authRef.current || !window.firebaseModules) return;
-                 await window.firebaseModules.signOut(authRef.current);
-            };
+            const logout = async () => { if (authRef.current) await window.firebaseModules.signOut(authRef.current); };
 
-            return { status, user, errorMsg, loginGoogle, logout };
+            return { status, user, errorMsg, loginGoogle, logout, db: dbRef.current, auth: authRef.current };
         };
 
-        // --- Speech Hook ---
+        // --- History / Calendar Hook ---
+        const useDreamHistory = (user, db) => {
+            const [history, setHistory] = useState({}); // { date: data }
+
+            useEffect(() => {
+                const loadHistory = async () => {
+                    // Always load local first
+                    const localHistory = JSON.parse(localStorage.getItem('soul_mirror_history') || '{}');
+                    setHistory(prev => ({ ...prev, ...localHistory }));
+
+                    // If online, sync with Firestore
+                    if (user && db && window.firebaseModules) {
+                        const { collection, onSnapshot, getFirestore } = window.firebaseModules;
+                        const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'soul-mirror-default';
+                        const colRef = collection(db, `artifacts/${appId}/users/${user.uid}/dreams`);
+                        
+                        onSnapshot(colRef, (snapshot) => {
+                            const cloudHistory = {};
+                            snapshot.forEach(doc => {
+                                const data = doc.data();
+                                // Assuming doc ID is date string 'YYYY-MM-DD'
+                                if (data.date) cloudHistory[data.date] = data;
+                            });
+                            setHistory(prev => ({ ...prev, ...cloudHistory }));
+                        });
+                    }
+                };
+                loadHistory();
+            }, [user, db]);
+
+            const saveToHistory = async (dreamData) => {
+                const dateKey = dreamData.date;
+                // Update Local
+                const newHistory = { ...history, [dateKey]: dreamData };
+                localStorage.setItem('soul_mirror_history', JSON.stringify(newHistory));
+                setHistory(newHistory);
+
+                // Update Cloud
+                if (user && db && window.firebaseModules) {
+                    const { doc, setDoc } = window.firebaseModules;
+                    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'soul-mirror-default';
+                    // Use date as doc ID to ensure 1 entry per day for simplicity in this MVP
+                    await setDoc(doc(db, `artifacts/${appId}/users/${user.uid}/dreams`, dateKey), dreamData);
+                }
+                alert(`已將「${dreamData.date}」的夢境存入日記！`);
+            };
+
+            return { history, saveToHistory };
+        };
+
         const useSpeechRecognition = () => {
-            const [isListening, setIsListening] = useState(false);
-            const [transcript, setTranscript] = useState('');
-            const recognitionRef = useRef(null);
-            const wakeLockRef = useRef(null);
-
-            const requestWakeLock = async () => {
-                if ('wakeLock' in navigator) {
-                    try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch (err) {}
-                }
-            };
-
-            const releaseWakeLock = async () => {
-                if (wakeLockRef.current) {
-                    try { await wakeLockRef.current.release(); wakeLockRef.current = null; } catch (err) {}
-                }
-            };
+            const [isListening, setIsListening] = useState(false); const [transcript, setTranscript] = useState('');
+            const recognitionRef = useRef(null); const wakeLockRef = useRef(null);
 
             useEffect(() => {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) return;
-
                 const recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = 'zh-TW'; 
-
-                recognition.onstart = () => { setIsListening(true); requestWakeLock(); };
-                recognition.onend = () => { setIsListening(false); releaseWakeLock(); };
-                recognition.onresult = (event) => {
-                    let finalTranscript = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
-                    }
-                    if (finalTranscript) setTranscript(prev => prev + finalTranscript);
+                recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'zh-TW'; 
+                recognition.onstart = async () => { setIsListening(true); try{wakeLockRef.current=await navigator.wakeLock.request('screen');}catch(e){} };
+                recognition.onend = async () => { setIsListening(false); if(wakeLockRef.current){try{await wakeLockRef.current.release();wakeLockRef.current=null;}catch(e){}} };
+                recognition.onresult = (e) => {
+                    let final = ''; for (let i = e.resultIndex; i < e.results.length; ++i) if(e.results[i].isFinal) final += e.results[i][0].transcript;
+                    if(final) setTranscript(p => p + final);
                 };
                 recognitionRef.current = recognition;
             }, []);
-
-            const startListening = () => { if (recognitionRef.current) recognitionRef.current.start(); else alert("瀏覽器不支援語音辨識"); };
-            const stopListening = () => { if (recognitionRef.current) recognitionRef.current.stop(); };
-            const resetTranscript = () => setTranscript('');
-
-            return { isListening, transcript, startListening, stopListening, resetTranscript };
+            return { isListening, transcript, startListening: () => recognitionRef.current?.start(), stopListening: () => recognitionRef.current?.stop(), resetTranscript: () => setTranscript('') };
         };
 
-        // --- Shared Components ---
+        // --- Icons & Components ---
         const IconWrapper = ({ name, size = 24, className, ...props }) => {
-            const containerRef = useRef(null);
-            useEffect(() => {
-                if (!window.lucide) return;
-                const i = document.createElement('i');
-                i.setAttribute('data-lucide', name);
-                if (containerRef.current) {
-                    containerRef.current.innerHTML = ''; 
-                    containerRef.current.appendChild(i);
-                    window.lucide.createIcons({ root: containerRef.current, attrs: { width: size, height: size } });
-                }
-            }, [name, size]);
-            return <span ref={containerRef} className={className} style={{ display: 'inline-flex', lineHeight: 0 }} {...props} />;
+            const ref = useRef(null);
+            useEffect(() => { if (window.lucide && ref.current) { const i = document.createElement('i'); i.setAttribute('data-lucide', name); ref.current.innerHTML = ''; ref.current.appendChild(i); window.lucide.createIcons({ root: ref.current, attrs: { width: size, height: size } }); } }, [name, size]);
+            return <span ref={ref} className={className} style={{ display: 'inline-flex', lineHeight: 0 }} {...props} />;
         };
+        const Icons = { Moon: p=>IconWrapper({name:'moon',...p}), Search: p=>IconWrapper({name:'search',...p}), Scale: p=>IconWrapper({name:'scale',...p}), Feather: p=>IconWrapper({name:'feather',...p}), ChevronLeft: p=>IconWrapper({name:'chevron-left',...p}), ChevronRight: p=>IconWrapper({name:'chevron-right',...p}), Plus: p=>IconWrapper({name:'plus',...p}), Trash2: p=>IconWrapper({name:'trash-2',...p}), Save: p=>IconWrapper({name:'save',...p}), Download: p=>IconWrapper({name:'download',...p}), X: p=>IconWrapper({name:'x',...p}), Book: p=>IconWrapper({name:'book',...p}), BookOpen: p=>IconWrapper({name:'book-open',...p}), Cloud: p=>IconWrapper({name:'cloud',...p}), Loader2: p=>IconWrapper({name:'loader-2',...p}), Check: p=>IconWrapper({name:'check',...p}), LogIn: p=>IconWrapper({name:'log-in',...p}), Upload: p=>IconWrapper({name:'upload',...p}), AlertTriangle: p=>IconWrapper({name:'alert-triangle',...p}), Printer: p=>IconWrapper({name:'printer',...p}), Mic: p=>IconWrapper({name:'mic',...p}), MicOff: p=>IconWrapper({name:'mic-off',...p}), Pencil: p=>IconWrapper({name:'pencil',...p}), Sparkles: p=>IconWrapper({name:'sparkles',...p}), Calendar: p=>IconWrapper({name:'calendar',...p}) };
 
-        const Moon = (props) => <IconWrapper name="moon" {...props} />;
-        const Search = (props) => <IconWrapper name="search" {...props} />;
-        const Scale = (props) => <IconWrapper name="scale" {...props} />;
-        const Feather = (props) => <IconWrapper name="feather" {...props} />;
-        const ChevronRight = (props) => <IconWrapper name="chevron-right" {...props} />;
-        const ChevronLeft = (props) => <IconWrapper name="chevron-left" {...props} />;
-        const Plus = (props) => <IconWrapper name="plus" {...props} />;
-        const Trash2 = (props) => <IconWrapper name="trash-2" {...props} />;
-        const Save = (props) => <IconWrapper name="save" {...props} />;
-        const Download = (props) => <IconWrapper name="download" {...props} />;
-        const X = (props) => <IconWrapper name="x" {...props} />;
-        const Book = (props) => <IconWrapper name="book" {...props} />;
-        const BookOpenIcon = (props) => <IconWrapper name="book-open" {...props} />;
-        const Cloud = (props) => <IconWrapper name="cloud" {...props} />;
-        const Loader2 = (props) => <IconWrapper name="loader-2" {...props} />;
-        const Check = (props) => <IconWrapper name="check" {...props} />;
-        const LogIn = (props) => <IconWrapper name="log-in" {...props} />;
-        const Upload = (props) => <IconWrapper name="upload" {...props} />;
-        const AlertTriangle = (props) => <IconWrapper name="alert-triangle" {...props} />;
-        const Printer = (props) => <IconWrapper name="printer" {...props} />;
-        const Mic = (props) => <IconWrapper name="mic" {...props} />;
-        const MicOff = (props) => <IconWrapper name="mic-off" {...props} />;
-        const Pencil = (props) => <IconWrapper name="pencil" {...props} />;
-        const Sparkles = (props) => <IconWrapper name="sparkles" {...props} />;
+        const STEPS = [ { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Icons.Moon }, { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Icons.Search }, { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Icons.Scale }, { id: 3, title: '整合', subtitle: 'The Integration', icon: Icons.Feather } ];
+        const MOOD_OPTIONS = [ { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/30 text-red-200 border-red-500/50' }, { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/30 text-orange-200 border-orange-500/50' }, { label: '驚訝/震撼', value: 'surprise', color: 'bg-lime-900/30 text-lime-200 border-lime-500/50' }, { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/30 text-yellow-200 border-yellow-500/50' }, { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/30 text-blue-200 border-blue-500/50' }, { label: '愛/連結', value: 'love', color: 'bg-pink-900/30 text-pink-200 border-pink-500/50' }, { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/30 text-indigo-200 border-indigo-500/50' }, { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/30 text-purple-200 border-purple-500/50' }, { label: '厭惡/排斥', value: 'disgust', color: 'bg-emerald-900/30 text-emerald-200 border-emerald-500/50' }, { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700/50 text-slate-300 border-slate-500/50' }, { label: '麻木/空虛', value: 'numb', color: 'bg-zinc-700/50 text-zinc-400 border-zinc-500/50' } ];
+        const SYMBOL_TYPES = [ { label: '人物 (People)', value: 'PERSON' }, { label: '物品 (Objects)', value: 'OBJECT' }, { label: '地點 (Place)', value: 'PLACE' }, { label: '情節 (Events)', value: 'EVENT' } ];
+        const INITIAL_STATE = { id: '', date: new Date().toISOString().split('T')[0], title: '', narrative: '', moods: [], waking_mood: '', symbols: [], discernment: { somatic: '', theological_reflection: '' }, integration: { message_to_self: '', scripture: '', prayer_action: '' } };
 
-        const STEPS = [
-            { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Moon },
-            { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Search },
-            { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Scale },
-            { id: 3, title: '整合', subtitle: 'The Integration', icon: Feather },
-        ];
+        const Label = ({ children, hint }) => (<label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif print-text-dark drop-shadow-md">{children}{hint && <span className="block mt-1 text-xs text-slate-400 font-sans font-light leading-relaxed print-text-gray">{hint}</span>}</label>);
+        const Input = ({ className = "", ...props }) => (<input className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border ${className}`} {...props} />);
+        const Textarea = ({ className = "", ...props }) => (<textarea className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input resize-none leading-relaxed print-bg-white print-text-dark print-border ${className}`} {...props} />);
 
-        const MOOD_OPTIONS = [
-            { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/30 text-red-200 border-red-500/50' },
-            { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/30 text-orange-200 border-orange-500/50' },
-            { label: '驚訝/震撼', value: 'surprise', color: 'bg-lime-900/30 text-lime-200 border-lime-500/50' },
-            { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/30 text-yellow-200 border-yellow-500/50' },
-            { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/30 text-blue-200 border-blue-500/50' },
-            { label: '愛/連結', value: 'love', color: 'bg-pink-900/30 text-pink-200 border-pink-500/50' },
-            { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/30 text-indigo-200 border-indigo-500/50' },
-            { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/30 text-purple-200 border-purple-500/50' },
-            { label: '厭惡/排斥', value: 'disgust', color: 'bg-emerald-900/30 text-emerald-200 border-emerald-500/50' },
-            { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700/50 text-slate-300 border-slate-500/50' },
-            { label: '麻木/空虛', value: 'numb', color: 'bg-zinc-700/50 text-zinc-400 border-zinc-500/50' },
-        ];
+        const CalendarModal = ({ isOpen, onClose, history, onSelectDate }) => {
+            const [currentDate, setCurrentDate] = useState(new Date());
+            
+            if (!isOpen) return null;
 
-        const SYMBOL_TYPES = [
-            { label: '人物 (People)', value: 'PERSON' },
-            { label: '物品 (Objects)', value: 'OBJECT' },
-            { label: '地點 (Place)', value: 'PLACE' },
-            { label: '情節 (Events)', value: 'EVENT' },
-        ];
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const days = [];
+            for (let i = 0; i < firstDay; i++) days.push(null);
+            for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
 
-        const INITIAL_STATE = {
-            id: '', 
-            date: new Date().toISOString().split('T')[0],
-            title: '',
-            narrative: '', 
-            moods: [],
-            waking_mood: '', 
-            symbols: [],
-            discernment: { somatic: '', theological_reflection: '' },
-            integration: { message_to_self: '', scripture: '', prayer_action: '' }
-        };
+            const formatDate = (d) => d.toISOString().split('T')[0];
 
-        const Label = ({ children, hint }) => (
-            <label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif print-text-dark drop-shadow-md">
-                {children}
-                {hint && <span className="block mt-1 text-xs text-slate-400 font-sans font-light leading-relaxed print-text-gray">{hint}</span>}
-            </label>
-        );
-
-        // Updated components to merge className correctly for glass effect consistency
-        const Input = ({ className = "", ...props }) => (
-            <input className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border ${className}`} {...props} />
-        );
-
-        const Textarea = ({ className = "", ...props }) => (
-            <textarea className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input resize-none leading-relaxed print-bg-white print-text-dark print-border ${className}`} {...props} />
-        );
-
-        const ProgressBar = ({ currentStep }) => (
-            <div className="w-full mb-8 px-2 relative z-10">
-                <div className="flex justify-between mb-2">
-                    {STEPS.map((step, index) => {
-                        const Icon = step.icon;
-                        const isActive = index === currentStep;
-                        const isCompleted = index < currentStep;
-                        return (
-                            <div key={step.id} className={`flex flex-col items-center w-1/4 relative z-10 transition-all duration-500 ${isActive ? 'opacity-100 transform scale-105' : 'opacity-60'}`}>
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 border backdrop-blur-md ${isActive ? 'bg-amber-500/90 border-amber-400 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.6)]' : isCompleted ? 'bg-slate-800/80 border-slate-600 text-amber-500/70' : 'bg-slate-900/50 border-slate-700 text-slate-500'}`}>
-                                    <Icon size={18} />
-                                </div>
-                                <span className={`text-xs font-serif tracking-wider hidden md:block drop-shadow-md ${isActive ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{step.title}</span>
-                                <span className="text-[10px] text-slate-500 uppercase tracking-widest hidden md:block">{step.subtitle}</span>
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-fadeIn" onClick={onClose}>
+                    <div className="glass-panel w-full max-w-md p-6 rounded-2xl border-slate-600/50" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-serif text-amber-100">{year}年 {month + 1}月</h3>
+                            <div className="flex gap-2">
+                                <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-1 hover:text-amber-400"><Icons.ChevronLeft size={20}/></button>
+                                <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-1 hover:text-amber-400"><Icons.ChevronRight size={20}/></button>
                             </div>
-                        );
-                    })}
+                        </div>
+                        <div className="grid grid-cols-7 gap-2 text-center text-sm mb-2 text-slate-400">
+                            <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                        </div>
+                        <div className="grid grid-cols-7 gap-2 text-center">
+                            {days.map((d, i) => {
+                                if (!d) return <div key={i}></div>;
+                                const dateStr = formatDate(d);
+                                const hasEntry = history[dateStr];
+                                return (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => { onSelectDate(dateStr, hasEntry); onClose(); }}
+                                        className={`p-2 rounded-lg hover:bg-slate-700/50 relative flex flex-col items-center justify-center h-10 ${hasEntry ? 'text-amber-100 font-bold' : 'text-slate-300'}`}
+                                    >
+                                        {d.getDate()}
+                                        {hasEntry && <span className="absolute bottom-1 w-1 h-1 bg-amber-400 rounded-full shadow-[0_0_5px_rgba(245,158,11,0.8)]"></span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button onClick={onClose} className="mt-6 w-full py-2 text-slate-400 hover:text-white text-sm">關閉</button>
+                    </div>
                 </div>
-                <div className="h-1 w-full bg-slate-800/50 rounded-full overflow-hidden relative top-[-3.5rem] md:top-auto z-0 mt-4 backdrop-blur-sm">
-                    <div className="h-full bg-gradient-to-r from-amber-700 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-700 ease-out" style={{ width: `${((currentStep + 0.5) / 4) * 100}%` }} />
-                </div>
-            </div>
-        );
-
-        // --- Main Application ---
+            );
+        };
 
         function SoulMirrorApp() {
             const [currentStep, setCurrentStep] = useState(0);
             const [formData, setFormData] = useState(INITIAL_STATE);
             const [isSymbolModalOpen, setIsSymbolModalOpen] = useState(false);
+            const [isCalendarOpen, setIsCalendarOpen] = useState(false);
             const [showWelcome, setShowWelcome] = useState(true);
             const [showSummary, setShowSummary] = useState(false);
             const fileInputRef = useRef(null);
             
-            const { status: syncStatus, user, errorMsg, loginGoogle, logout } = useFirebaseSync(formData, setFormData);
+            const { status: syncStatus, user, errorMsg, loginGoogle, logout, db } = useFirebaseSync(formData, setFormData);
             const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechRecognition();
+            const { history, saveToHistory } = useDreamHistory(user, db);
 
             const [newSymbol, setNewSymbol] = useState({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
 
-            // Handlers
+            useEffect(() => { generateAppIcon(); }, []);
+            useEffect(() => { if (transcript) { setFormData(prev => ({ ...prev, narrative: (prev.narrative || '') + transcript })); resetTranscript(); } }, [transcript]);
             
-            // Icon generation on mount
-            useEffect(() => {
-                generateAppIcon();
-            }, []);
-
-            useEffect(() => {
-                if (transcript) {
-                    setFormData(prev => ({ ...prev, narrative: (prev.narrative || '') + transcript }));
-                    resetTranscript(); 
-                }
-            }, [transcript]);
-
+            // Init load
             useEffect(() => {
                 const savedData = localStorage.getItem('soul_mirror_draft_v2');
-                if (savedData) {
-                    try {
-                        setFormData(prev => ({ ...JSON.parse(savedData), ...prev }));
-                        setShowWelcome(false); 
-                    } catch (e) { console.error(e); }
-                } else {
-                    setFormData(prev => ({ ...prev, id: crypto.randomUUID() }));
-                }
+                if (savedData) { try { setFormData(prev => ({ ...JSON.parse(savedData), ...prev })); setShowWelcome(false); } catch (e) { console.error(e); } } 
+                else { setFormData(prev => ({ ...prev, id: crypto.randomUUID() })); }
             }, []);
 
-            useEffect(() => {
-                localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData));
-            }, [formData]);
+            // Auto-save draft
+            useEffect(() => { localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData)); }, [formData]);
 
             const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
             const updateDiscernment = (field, value) => setFormData(prev => ({ ...prev, discernment: { ...prev.discernment, [field]: value } }));
             const updateIntegration = (field, value) => setFormData(prev => ({ ...prev, integration: { ...prev.integration, [field]: value } }));
-
-            const toggleMood = (moodValue) => {
-                setFormData(prev => {
-                    const moods = prev.moods.includes(moodValue) ? prev.moods.filter(m => m !== moodValue) : [...prev.moods, moodValue];
-                    return { ...prev, moods };
-                });
-            };
-
-            const handleSaveSymbol = () => {
-                if (!newSymbol.name) return;
-
-                if (newSymbol.id) {
-                    // Update
-                    setFormData(prev => ({
-                        ...prev,
-                        symbols: prev.symbols.map(s => s.id === newSymbol.id ? newSymbol : s)
-                    }));
-                } else {
-                    // Add
-                    setFormData(prev => ({
-                        ...prev,
-                        symbols: [...prev.symbols, { ...newSymbol, id: Date.now() }]
-                    }));
-                }
-                
-                setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
-                setIsSymbolModalOpen(false);
-            };
-
+            const toggleMood = (moodValue) => { setFormData(prev => { const moods = prev.moods.includes(moodValue) ? prev.moods.filter(m => m !== moodValue) : [...prev.moods, moodValue]; return { ...prev, moods }; }); };
+            const handleSaveSymbol = () => { if (!newSymbol.name) return; setFormData(prev => ({ ...prev, symbols: newSymbol.id ? prev.symbols.map(s => s.id === newSymbol.id ? newSymbol : s) : [...prev.symbols, { ...newSymbol, id: Date.now() }] })); setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' }); setIsSymbolModalOpen(false); };
             const removeSymbol = (id) => setFormData(prev => ({ ...prev, symbols: prev.symbols.filter(s => s.id !== id) }));
-
-            const handleExport = () => {
-                const dataStr = JSON.stringify(formData, null, 2);
-                const blob = new Blob([dataStr], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `dream_backup_${formData.date}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-
+            const handleExport = () => { const blob = new Blob([JSON.stringify(formData, null, 2)], { type: "application/json" }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `dream_backup_${formData.date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
             const handleImportClick = () => fileInputRef.current.click();
+            const handleFileChange = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (evt) => { try { const data = JSON.parse(evt.target.result); if (data.id && data.date) { if (confirm(`匯入「${data.title}」？這將覆蓋目前編輯內容。`)) setFormData(data); } else alert("格式錯誤"); } catch (err) { alert("讀取失敗"); } e.target.value = ''; }; reader.readAsText(file); };
 
-            const handleFileChange = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const importedData = JSON.parse(e.target.result);
-                        if (importedData.id && importedData.date) {
-                            if (window.confirm(`即將匯入「${importedData.title || '未命名'}」(${importedData.date})，這將覆蓋目前的編輯內容。確定嗎？`)) {
-                                setFormData(importedData);
-                            }
-                        } else { alert("格式錯誤：這似乎不是靈魂之鏡的備份檔。"); }
-                    } catch (error) { alert("檔案讀取失敗，請確認檔案是否為有效的 JSON。"); }
-                    event.target.value = '';
-                };
-                reader.readAsText(file);
+            const handleDateSelect = (dateStr, hasEntry) => {
+                if (hasEntry) {
+                    if (confirm(`載入 ${dateStr} 的夢境紀錄？`)) {
+                        setFormData(hasEntry);
+                        setShowSummary(true); // Jump to summary view directly
+                    }
+                } else {
+                    if (confirm(`切換到 ${dateStr} 並開始新紀錄？(目前未儲存的內容可能會遺失，請先匯出)`)) {
+                        setFormData({ ...INITIAL_STATE, id: crypto.randomUUID(), date: dateStr });
+                        setCurrentStep(0);
+                        setShowSummary(false);
+                    }
+                }
             };
-
-            // --- Render Logic (Declarations must be before Return) ---
 
             const renderSyncStatus = () => {
-                let icon = <Cloud size={16} className="text-slate-500" />;
-                let text = "離線";
-                let color = "border-slate-700 text-slate-500";
-                const showTooltip = syncStatus === 'error';
-
-                if (syncStatus === 'syncing') {
-                    icon = <Loader2 size={16} className="text-amber-500 animate-spin" />;
-                    text = "同步中...";
-                    color = "border-amber-500/50 text-amber-500";
-                } else if (syncStatus === 'saved') {
-                    icon = <Check size={16} className="text-green-400" />;
-                    text = "已儲存";
-                    color = "border-green-500/50 text-green-400";
-                } else if (syncStatus === 'synced') {
-                    icon = <Cloud size={16} className="text-blue-400" />;
-                    text = "雲端連線";
-                    color = "border-blue-500/50 text-blue-400";
-                } else if (syncStatus === 'error') {
-                    icon = <X size={16} className="text-red-400" />;
-                    text = "同步錯誤";
-                    color = "border-red-500/50 text-red-400 cursor-help";
-                }
-
-                return (
-                    <div className="relative group">
-                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border bg-slate-900/80 text-xs font-medium backdrop-blur-sm transition-all ${color}`}>
-                            {icon}<span className="hidden md:inline">{text}</span>
-                        </div>
-                        {showTooltip && <div className="absolute top-full right-0 mt-2 w-64 bg-red-900 border border-red-700 text-red-100 text-xs p-2 rounded shadow-xl z-50">{errorMsg || "請檢查 Firebase Console 設定"}</div>}
-                    </div>
-                );
+                let icon = <Icons.Cloud size={16} className="text-slate-500" />; let text = "離線"; let color = "border-slate-700 text-slate-500";
+                if (syncStatus === 'syncing') { icon = <Icons.Loader2 size={16} className="text-amber-500 animate-spin" />; text = "同步中..."; color = "border-amber-500/50 text-amber-500"; }
+                else if (syncStatus === 'saved') { icon = <Icons.Check size={16} className="text-green-400" />; text = "已儲存"; color = "border-green-500/50 text-green-400"; }
+                else if (syncStatus === 'synced') { icon = <Icons.Cloud size={16} className="text-blue-400" />; text = "雲端連線"; color = "border-blue-500/50 text-blue-400"; }
+                else if (syncStatus === 'error') { icon = <Icons.X size={16} className="text-red-400" />; text = "同步錯誤"; color = "border-red-500/50 text-red-400 cursor-help"; }
+                return <div className="relative group"><div className={`flex items-center gap-2 px-3 py-1 rounded-full border bg-slate-900/80 text-xs font-medium backdrop-blur-sm transition-all ${color}`}>{icon}<span className="hidden md:inline">{text}</span></div>{syncStatus === 'error' && <div className="absolute top-full right-0 mt-2 w-64 bg-red-900 border border-red-700 text-red-100 text-xs p-2 rounded shadow-xl z-50">{errorMsg || "請檢查設定"}</div>}</div>;
             };
 
-            const renderWelcome = () => (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-                    <div className="glass-panel max-w-lg w-full p-8 rounded-2xl relative border-slate-600/50">
-                        <div className="text-center space-y-6">
-                            <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(245,158,11,0.3)]"><Moon className="text-amber-400" size={32} /></div>
-                            <h2 className="text-2xl font-serif text-amber-100 tracking-wide drop-shadow-lg">歡迎來到靈魂之鏡：夢語聖所</h2>
-                            <blockquote className="text-slate-300 italic font-light leading-relaxed border-l-2 border-amber-500/50 pl-4 text-left">
-                                「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
-                                <footer className="mt-3 text-sm text-amber-400/80 not-italic">— 陪你穿越夢境的夥伴 Anne</footer>
-                            </blockquote>
-                            <button onClick={() => setShowWelcome(false)} className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5">開始紀錄夢境</button>
-                        </div>
-                    </div>
-                </div>
-            );
-
+            // ... Render Steps Functions (Step 1-4) similar to before ...
+            // Compacted for brevity, logic identical to v0.8
             const renderStep1_Capture = () => (
                 <div className="space-y-8 animate-fadeIn">
-                    <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 print-bg-white print-border">
-                        <h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 1: 捕捉直覺</h3>
-                        <p className="text-slate-400 text-sm print-text-gray">趁意識防衛機制尚未完全運作前，記錄夢的原始樣貌。</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div><Label hint="紀錄當下的時節，有時與教會節期或個人生命週期有關。">夢境日期</Label><Input type="date" value={formData.date} onChange={(e) => updateField('date', e.target.value)} /></div>
-                        <div className="md:col-span-2"><Label hint="如果這是一個電影或寓言故事，你會給它什麼名字？">夢境標題 (The Headline)</Label><Input placeholder="例如：迷失在古老的森林..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} /></div>
-                    </div>
-                    <div>
-                        <div className="flex justify-between items-end mb-2">
-                            <Label hint="請用『現在式』描述，就像你現在正在經歷它一樣。">夢境敘事 (The Narrative)</Label>
-                            <button 
-                                onClick={isListening ? stopListening : startListening}
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-lg ${isListening ? 'bg-red-500/90 text-white animate-pulse-red' : 'glass-panel text-slate-300 hover:text-white hover:bg-slate-700/50'}`}
-                            >
-                                {isListening ? <><MicOff size={14} /> 聆聽中...</> : <><Mic size={14} /> 語音輸入</>}
-                            </button>
-                        </div>
-                        <Textarea rows={12} placeholder="點擊上方麥克風，直接說出您的夢境..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} />
-                    </div>
-                    <div>
-                        <Label hint="直覺的情緒反應（可多選）">夢中情緒色譜</Label>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                            {MOOD_OPTIONS.map((mood) => {
-                                const isSelected = formData.moods.includes(mood.value);
-                                return (
-                                    <button key={mood.value} onClick={() => toggleMood(mood.value)} className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all duration-300 flex items-center gap-2 print-border ${isSelected ? mood.color + ' shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105' : 'bg-transparent border-slate-600/50 text-slate-400 hover:border-slate-400 hover:text-slate-200'}`}>
-                                        <div className={`w-2 h-2 rounded-full ${mood.color.split(' ')[0].replace('/30','')} shadow-[0_0_5px_currentColor]`} />
-                                        <span className="print-text-dark">{mood.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 1: 捕捉直覺</h3><p className="text-slate-400 text-sm print-text-gray">趁意識防衛機制尚未完全運作前，記錄夢的原始樣貌。</p></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div><Label hint="紀錄當下的時節">夢境日期</Label><Input type="date" value={formData.date} onChange={(e) => updateField('date', e.target.value)} /></div><div className="md:col-span-2"><Label hint="如果這是一個電影或寓言故事，你會給它什麼名字？">夢境標題 (The Headline)</Label><Input placeholder="例如：迷失在古老的森林..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} /></div></div>
+                    <div><div className="flex justify-between items-end mb-2"><Label hint="請用『現在式』描述。">夢境敘事 (The Narrative)</Label><button onClick={isListening ? stopListening : startListening} className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-lg ${isListening ? 'bg-red-500/90 text-white animate-pulse-red' : 'glass-panel text-slate-300 hover:text-white hover:bg-slate-700/50'}`}>{isListening ? <><Icons.MicOff size={14} /> 聆聽中...</> : <><Icons.Mic size={14} /> 語音輸入</>}</button></div><Textarea rows={12} placeholder="點擊上方麥克風，直接說出您的夢境..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} /></div>
+                    <div><Label hint="直覺的情緒反應（可多選）">夢中情緒色譜</Label><div className="flex flex-wrap gap-2 mt-2">{MOOD_OPTIONS.map((mood) => { const isSelected = formData.moods.includes(mood.value); return (<button key={mood.value} onClick={() => toggleMood(mood.value)} className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all duration-300 flex items-center gap-2 print-border ${isSelected ? mood.color + ' shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105' : 'bg-transparent border-slate-600/50 text-slate-400 hover:border-slate-400 hover:text-slate-200'}`}><div className={`w-2 h-2 rounded-full ${mood.color.split(' ')[0].replace('/30','')} shadow-[0_0_5px_currentColor]`} /><span className="print-text-dark">{mood.label}</span></button>); })}</div></div>
                 </div>
             );
 
+            // ... Step 2, 3, 4 Renders ...
             const renderStep2_Excavation = () => {
-                const getQuestions = (type) => {
-                    switch(type) {
-                        case 'PERSON': return { 
-                            l1: '夢中人物是誰？', 
-                            h1: '是認識的人還是陌生人？', 
-                            l2: '榮格引導：內在投射 (Projection)', 
-                            h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？（例如：嚴厲的老師 = 我內在那個「過度自我批判」的聲音，即超我或陰影）', 
-                            l3: '神學引導：關係與啟示', 
-                            h3: '這個人物是否讓你聯想到聖經中的某個角色？或是神透過這個特質在提醒你關於「關係」的功課？' 
-                        };
-                        case 'OBJECT': return { 
-                            l1: '出現了什麼顯眼的物品？', 
-                            h1: '如：鑰匙、枯樹、聖經、車子...', 
-                            l2: '榮格引導：象徵功能 (Function)', 
-                            h2: '這個物品是用來做什麼的？它象徵你目前擁有的「資源」（如：車子代表動力）還是「阻礙」？', 
-                            l3: '神學引導：偶像 vs 恩賜', 
-                            h3: '這讓你聯想到你過度依賴的事物（心中的金牛犢），還是神賜給你使用的工具（手中的杖）？' 
-                        };
-                        case 'PLACE': return { 
-                            l1: '夢發生在哪裡？', 
-                            h1: '如：老家、考試會場、教堂、荒野...', 
-                            l2: '榮格引導：心靈場景 (Setting)', 
-                            h2: '這是你熟悉的過去（退行/尋求安全感）還是陌生的地方（探索未知/潛能）？氛圍是壓抑還是開闊？', 
-                            l3: '神學引導：屬靈季節', 
-                            h3: '這看起來像是「埃及」（舊生活/捆綁）、「曠野」（試煉/依靠神）還是「迦南地」（應許/豐盛）？' 
-                        };
-                        case 'EVENT': return { 
-                            l1: '發生了什麼事？', 
-                            h1: '如：被追趕、飛翔、迷路、考試...', 
-                            l2: '榮格引導：補償機制 (Compensation)', 
-                            h2: '如果夢是在平衡你白天的意識態度，它在說什麼？（例如：白天自以為是，夢中卻一直在跌倒或迷路）', 
-                            l3: '神學引導：試探 vs 試煉', 
-                            h3: '這個情節是在顯明你內心的恐懼（試探），還是在鍛鍊你的信心（試煉）？主要的衝突點在哪裡？' 
-                        };
-                        default: return {};
-                    }
-                };
+                const getQuestions = (type) => { switch(type) { case 'PERSON': return { l1: '夢中人物是誰？', h1: '是認識的人還是陌生人？', l2: '榮格引導：內在投射', h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？', l3: '神學引導：關係與啟示', h3: '這個人物是否讓你聯想到聖經中的某個角色？' }; case 'OBJECT': return { l1: '出現了什麼顯眼的物品？', h1: '如：鑰匙、枯樹...', l2: '榮格引導：象徵功能', h2: '這個物品是用來做什麼的？它象徵資源還是阻礙？', l3: '神學引導：偶像 vs 恩賜', h3: '這讓你聯想到心中的金牛犢，還是手中的杖？' }; case 'PLACE': return { l1: '夢發生在哪裡？', h1: '如：老家、曠野...', l2: '榮格引導：心靈場景', h2: '這是熟悉的過去還是陌生的未來？', l3: '神學引導：屬靈季節', h3: '這像是「埃及」、「曠野」還是「迦南地」？' }; case 'EVENT': return { l1: '發生了什麼事？', h1: '如：被追趕、飛翔...', l2: '榮格引導：補償機制', h2: '如果夢是在平衡白天的態度，它在說什麼？', l3: '神學引導：試探 vs 試煉', h3: '這是恐懼的試探，還是信心的試煉？' }; default: return {}; } };
                 const q = getQuestions(newSymbol.type);
-                return (
-                    <div className="space-y-6 animate-fadeIn">
-                        <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 mb-6 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 2: 拆解與聯想</h3><p className="text-slate-400 text-sm print-text-gray">利用「人事時地物」進行擴大聯想，挖掘個人與屬靈意義。</p></div>
-                        <div className="space-y-4">
-                            {formData.symbols.map((symbol) => (
-                                <div key={symbol.id} className="glass-panel p-5 rounded-xl hover:border-amber-500/30 transition-colors group print-bg-white print-border print-text-dark">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-900/50 text-amber-400 border border-slate-600/50 print-bg-white print-text-dark print-border">{SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}</span>
-                                            <h4 className="font-bold text-slate-100 text-lg print-text-dark">{symbol.name}</h4>
-                                        </div>
-                                        <div className="flex gap-2 no-print">
-                                            <button 
-                                                onClick={() => {
-                                                    setNewSymbol(symbol);
-                                                    setIsSymbolModalOpen(true);
-                                                }}
-                                                className="text-slate-500 hover:text-amber-400 transition-colors p-1"
-                                                title="編輯"
-                                            >
-                                                <Pencil size={18} />
-                                            </button>
-                                            <button onClick={() => removeSymbol(symbol.id)} className="text-slate-500 hover:text-red-400 transition-colors p-1" title="刪除"><Trash2 size={18} /></button>
-                                        </div>
-                                    </div>
-                                    <div className="grid gap-3 text-sm text-slate-400 pl-3 border-l-2 border-slate-700/50 print-text-gray print-border"><p><span className="text-slate-500 print-text-dark font-medium">解析 1:</span> {symbol.q2}</p>{symbol.q3 && <p><span className="text-slate-500 print-text-dark font-medium">解析 2:</span> {symbol.q3}</p>}</div>
-                                </div>
-                            ))}
-                            <button 
-                                onClick={() => {
-                                    setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
-                                    setIsSymbolModalOpen(true);
-                                }}
-                                className="w-full py-8 border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-3 group no-print backdrop-blur-sm"
-                            >
-                                <div className="p-3 bg-slate-800/50 rounded-full group-hover:bg-slate-700 transition-colors shadow-lg"><Plus size={24} /></div><span className="font-medium tracking-wide">點擊此處，挖掘夢中的關鍵元素</span>
-                            </button>
-                        </div>
-                        {isSymbolModalOpen && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm no-print">
-                                <div className="glass-panel rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar border-slate-600/50">
-                                    <button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><X size={24} /></button>
-                                    <h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">
-                                        {newSymbol.id ? <><Pencil size={20} /> 編輯元素</> : <><Search size={20} /> 挖掘元素</>}
-                                    </h3>
-                                    <div className="space-y-6">
-                                        <div><Label>這個元素的類型是？</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">{SYMBOL_TYPES.map(t => (<button key={t.value} onClick={() => setNewSymbol({ ...newSymbol, type: t.value })} className={`p-3 text-xs rounded-lg border transition-all ${newSymbol.type === t.value ? 'bg-amber-900/40 border-amber-500 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-slate-700 text-slate-400 hover:bg-slate-800/50'}`}>{t.label}</button>))}</div></div>
-                                        <div className="p-5 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-5"><div><Label hint={q.h1}>{q.l1}</Label><Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} /></div><div><Label hint={q.h2}>{q.l2}</Label><Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} /></div><div><Label hint={q.h3}>{q.l3}</Label><Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} /></div></div>
-                                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
-                                            <button onClick={() => setIsSymbolModalOpen(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">取消</button>
-                                            <button onClick={handleSaveSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg">
-                                                {newSymbol.id ? '更新儲存' : '確認新增'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
+                return ( <div className="space-y-6 animate-fadeIn"><div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 mb-6 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 2: 拆解與聯想</h3><p className="text-slate-400 text-sm print-text-gray">利用「人事時地物」進行擴大聯想，挖掘個人與屬靈意義。</p></div><div className="space-y-4">{formData.symbols.map((symbol) => (<div key={symbol.id} className="glass-panel p-5 rounded-xl hover:border-amber-500/30 transition-colors group print-bg-white print-border print-text-dark"><div className="flex justify-between items-start mb-3"><div className="flex items-center gap-3"><span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-900/50 text-amber-400 border border-slate-600/50 print-bg-white print-text-dark print-border">{SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}</span><h4 className="font-bold text-slate-100 text-lg print-text-dark">{symbol.name}</h4></div><div className="flex gap-2 no-print"><button onClick={() => { setNewSymbol(symbol); setIsSymbolModalOpen(true); }} className="text-slate-500 hover:text-amber-400 p-1"><Icons.Pencil size={18} /></button><button onClick={() => removeSymbol(symbol.id)} className="text-slate-500 hover:text-red-400 p-1"><Icons.Trash2 size={18} /></button></div></div><div className="grid gap-3 text-sm text-slate-400 pl-3 border-l-2 border-slate-700/50 print-text-gray print-border"><p><span className="text-slate-500 print-text-dark font-medium">解析 1:</span> {symbol.q2}</p>{symbol.q3 && <p><span className="text-slate-500 print-text-dark font-medium">解析 2:</span> {symbol.q3}</p>}</div></div>))}<button onClick={() => { setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' }); setIsSymbolModalOpen(true); }} className="w-full py-8 border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-3 group no-print backdrop-blur-sm"><div className="p-3 bg-slate-800/50 rounded-full group-hover:bg-slate-700 transition-colors shadow-lg"><Icons.Plus size={24} /></div><span className="font-medium tracking-wide">點擊此處，挖掘夢中的關鍵元素</span></button></div>{isSymbolModalOpen && (<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm no-print"><div className="glass-panel rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar border-slate-600/50"><button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24} /></button><h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">{newSymbol.id ? <><Icons.Pencil size={20} /> 編輯元素</> : <><Icons.Search size={20} /> 挖掘元素</>}</h3><div className="space-y-6"><div><Label>這個元素的類型是？</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">{SYMBOL_TYPES.map(t => (<button key={t.value} onClick={() => setNewSymbol({ ...newSymbol, type: t.value })} className={`p-3 text-xs rounded-lg border transition-all ${newSymbol.type === t.value ? 'bg-amber-900/40 border-amber-500 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-slate-700 text-slate-400 hover:bg-slate-800/50'}`}>{t.label}</button>))}</div></div><div className="p-5 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-5"><div><Label hint={q.h1}>{q.l1}</Label><Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} /></div><div><Label hint={q.h2}>{q.l2}</Label><Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} /></div><div><Label hint={q.h3}>{q.l3}</Label><Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} /></div></div><div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={() => setIsSymbolModalOpen(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">取消</button><button onClick={handleSaveSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg">{newSymbol.id ? '更新儲存' : '確認新增'}</button></div></div></div></div>)}</div> );
             };
 
             const renderStep3_Discernment = () => (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 3: 感受與分辨</h3><p className="text-slate-400 text-sm print-text-gray">連結情感中樞與屬靈聽力，分辨聲音的源頭。</p></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="glass-panel p-6 rounded-xl print-bg-white print-border"><h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 print-text-dark"><Moon size={16} /> 夢中情緒</h4><div className="flex flex-wrap gap-2">{formData.moods.length > 0 ? formData.moods.map(m => (<span key={m} className="px-3 py-1 rounded-full bg-slate-800/50 text-slate-300 text-xs border border-slate-600/50 print-text-dark print-border">{MOOD_OPTIONS.find(opt => opt.value === m)?.label}</span>)) : <span className="text-slate-600 text-sm italic print-text-gray">未選擇</span>}</div></div>
-                        <div><Label hint="夢裡的你感到恐懼，但醒來的你是否感到釋放？情緒的反差往往藏著真相。">醒後情緒 (Waking Emotion)</Label><Input placeholder="醒來後的第一個感覺是..." value={formData.waking_mood} onChange={(e) => updateField('waking_mood', e.target.value)}/></div>
-                    </div>
-                    <div><Label hint="記錄完這個夢，你的身體哪個部位有感覺？（胸口悶、肩膀鬆、腹部熱）。身體是潛意識最誠實的出口。">身體感受 (Somatic Marker)</Label><Input placeholder="我的身體感覺..." value={formData.discernment.somatic} onChange={(e) => updateDiscernment('somatic', e.target.value)}/></div>
-                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 print-bg-white print-border backdrop-blur-sm"><Label hint="這個夢境帶給你的核心訊息，是讓你感到『定罪/羞愧』（來自控告者）還是『悔改/盼望』（來自聖靈）？請試著分辨這個聲音的源頭。">屬靈分辨 (Theological Reflection)</Label><Textarea rows={5} className="bg-slate-900/50 border-purple-500/30 focus:border-purple-400/60 print-bg-white print-text-dark print-border" placeholder="我認為這個聲音來自..." value={formData.discernment.theological_reflection} onChange={(e) => updateDiscernment('theological_reflection', e.target.value)}/></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8"><div className="glass-panel p-6 rounded-xl print-bg-white print-border"><h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 print-text-dark"><Icons.Moon size={16} /> 夢中情緒</h4><div className="flex flex-wrap gap-2">{formData.moods.length > 0 ? formData.moods.map(m => (<span key={m} className="px-3 py-1 rounded-full bg-slate-800/50 text-slate-300 text-xs border border-slate-600/50 print-text-dark print-border">{MOOD_OPTIONS.find(opt => opt.value === m)?.label}</span>)) : <span className="text-slate-600 text-sm italic print-text-gray">未選擇</span>}</div></div><div><Label hint="夢裡的你感到恐懼，但醒來的你是否感到釋放？">醒後情緒 (Waking Emotion)</Label><Input placeholder="醒來後的第一個感覺是..." value={formData.waking_mood} onChange={(e) => updateField('waking_mood', e.target.value)}/></div></div>
+                    <div><Label hint="記錄完這個夢，你的身體哪個部位有感覺？">身體感受 (Somatic Marker)</Label><Input placeholder="我的身體感覺..." value={formData.discernment.somatic} onChange={(e) => updateDiscernment('somatic', e.target.value)}/></div>
+                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 print-bg-white print-border backdrop-blur-sm"><Label hint="這個夢境帶給你的核心訊息，是讓你感到『定罪/羞愧』還是『悔改/盼望』？">屬靈分辨 (Theological Reflection)</Label><Textarea rows={5} className="bg-slate-900/50 border-purple-500/30 focus:border-purple-400/60 print-bg-white print-text-dark print-border" placeholder="我認為這個聲音來自..." value={formData.discernment.theological_reflection} onChange={(e) => updateDiscernment('theological_reflection', e.target.value)}/></div>
                 </div>
             );
 
@@ -809,30 +411,32 @@
                 <div className="space-y-8 animate-fadeIn h-full flex flex-col">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 flex-shrink-0 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 4: 行動與儀式</h3><p className="text-slate-400 text-sm print-text-gray">將潛意識的洞見帶入意識層面，產生轉化。</p></div>
                     <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
-                        <div><Label hint="如果這個夢是『真實的自己』(Self) 寫給『小我』(Ego) 的一封信，它想說的一句話是什麼？">給真實自己的信 (Message to Self)</Label><div className="relative"><Feather className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Textarea rows={3} className="pl-10 font-serif italic text-lg text-amber-100 print-bg-white print-text-dark print-border" placeholder="親愛的..." value={formData.integration.message_to_self} onChange={(e) => updateIntegration('message_to_self', e.target.value)}/></div></div>
-                        <div><Label hint="輸入關鍵字，或記錄下神讓你想起的一段經文。">聖經金句聯想 (Scriptural Connection)</Label><div className="relative"><Book className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Input className="pl-10 print-bg-white print-text-dark print-border" placeholder="例如：詩篇 23:4..." value={formData.integration.scripture} onChange={(e) => updateIntegration('scripture', e.target.value)}/></div></div>
-                        <div><Label hint="為了回應這個夢，你今天願意做一個小小的行動嗎？或者寫下一段禱告交託給神。">禱告與行動 (Prayer & Action)</Label><Textarea rows={5} className="border-amber-500/30 focus:border-amber-500 print-bg-white print-text-dark print-border" placeholder="主啊，透過這個夢，我願意..." value={formData.integration.prayer_action} onChange={(e) => updateIntegration('prayer_action', e.target.value)}/></div>
+                        <div><Label hint="如果這個夢是『真實的自己』寫給『小我』的一封信，它想說的一句話是什麼？">給真實自己的信 (Message to Self)</Label><div className="relative"><Icons.Feather className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Textarea rows={3} className="pl-10 font-serif italic text-lg text-amber-100 print-bg-white print-text-dark print-border" placeholder="親愛的..." value={formData.integration.message_to_self} onChange={(e) => updateIntegration('message_to_self', e.target.value)}/></div></div>
+                        <div><Label hint="輸入關鍵字，或記錄下神讓你想起的一段經文。">聖經金句聯想 (Scriptural Connection)</Label><div className="relative"><Icons.Book className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Input className="pl-10 print-bg-white print-text-dark print-border" placeholder="例如：詩篇 23:4..." value={formData.integration.scripture} onChange={(e) => updateIntegration('scripture', e.target.value)}/></div></div>
+                        <div><Label hint="為了回應這個夢，你今天願意做一個小小的行動嗎？">禱告與行動 (Prayer & Action)</Label><Textarea rows={5} className="border-amber-500/30 focus:border-amber-500 print-bg-white print-text-dark print-border" placeholder="主啊，透過這個夢，我願意..." value={formData.integration.prayer_action} onChange={(e) => updateIntegration('prayer_action', e.target.value)}/></div>
+                        <div className="pt-4 border-t border-slate-700/50 flex justify-end no-print">
+                            <button onClick={() => saveToHistory(formData)} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition-all"><Icons.Save size={18}/> 存入日記 (Save to History)</button>
+                        </div>
                     </div>
                 </div>
             );
 
+            // Summary View
             const renderSummaryView = () => (
                 <div id="summary-view" className="fixed inset-0 z-50 bg-[#0f172a]/95 backdrop-blur-xl overflow-y-auto animate-fadeIn">
                     <div className="max-w-4xl mx-auto p-8">
                         <div className="flex justify-between items-center mb-8 border-b border-slate-700/50 pb-4 print-border">
                             <div><h2 className="text-3xl font-serif text-amber-500 mb-1 print-text-dark drop-shadow-md">夢境紀錄卡</h2><p className="text-slate-500 text-sm print-text-gray">{formData.date} | {formData.title}</p></div>
-                            <div className="flex gap-3 no-print">
-                                <button onClick={() => setShowSummary(false)} className="px-4 py-2 text-slate-400 hover:text-white transition-colors">返回編輯</button>
-                                <button onClick={() => window.print()} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg hover:shadow-amber-500/20 transition-all"><Printer size={18} /> 列印 / 另存 PDF</button>
-                            </div>
+                            <div className="flex gap-3 no-print"><button onClick={() => setShowSummary(false)} className="px-4 py-2 text-slate-400 hover:text-white transition-colors">返回編輯</button><button onClick={() => window.print()} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg hover:shadow-amber-500/20 transition-all"><Icons.Printer size={18} /> 列印 / 另存 PDF</button></div>
                         </div>
+                        {/* Summary Content same as before */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-6">
                                 <section className="glass-panel p-6 rounded-xl print-bg-white print-border"><h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 print-text-gray">The Narrative</h3><p className="text-slate-200 whitespace-pre-wrap leading-loose font-light font-serif text-lg print-text-dark">{formData.narrative}</p></section>
                                 <section className="glass-panel p-6 rounded-xl print-bg-white print-border"><h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 print-text-gray">Discernment</h3><div className="space-y-4"><div><span className="text-slate-500 text-sm print-text-gray">夢中情緒：</span> <span className="text-slate-300 print-text-dark">{formData.moods.join(', ') || '-'}</span></div><div><span className="text-slate-500 text-sm print-text-gray">醒後情緒：</span> <span className="text-slate-300 print-text-dark">{formData.waking_mood || '-'}</span></div><div><span className="text-slate-500 text-sm print-text-gray">身體感受：</span> <span className="text-slate-300 print-text-dark">{formData.discernment.somatic || '-'}</span></div><div className="pt-2 border-t border-slate-700/50 print-border"><p className="text-purple-300 italic text-sm print-text-dark">{formData.discernment.theological_reflection || '尚無屬靈分辨紀錄'}</p></div></div></section>
                             </div>
                             <div className="space-y-6">
-                                <section className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20 print-bg-white print-border backdrop-blur-md"><h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-4 print-text-dark">Integration</h3><div className="space-y-6"><div><h4 className="font-serif text-xl text-slate-100 mb-2 print-text-dark">"{formData.integration.message_to_self || '...'}"</h4><p className="text-right text-xs text-slate-500 print-text-gray">— 給自己的信</p></div>{formData.integration.scripture && (<div className="flex items-start gap-2 text-slate-300 bg-slate-900/50 p-3 rounded print-bg-white print-text-dark"><Book size={16} className="mt-1 text-slate-500 print-text-gray"/><span>{formData.integration.scripture}</span></div>)}<div><h5 className="text-slate-400 text-xs font-bold mb-2 print-text-gray">PRAYER & ACTION</h5><p className="text-slate-300 italic print-text-dark">{formData.integration.prayer_action || '-'}</p></div></div></section>
+                                <section className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20 print-bg-white print-border backdrop-blur-md"><h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-4 print-text-dark">Integration</h3><div className="space-y-6"><div><h4 className="font-serif text-xl text-slate-100 mb-2 print-text-dark">"{formData.integration.message_to_self || '...'}"</h4><p className="text-right text-xs text-slate-500 print-text-gray">— 給自己的信</p></div>{formData.integration.scripture && (<div className="flex items-start gap-2 text-slate-300 bg-slate-900/50 p-3 rounded print-bg-white print-text-dark"><Icons.Book size={16} className="mt-1 text-slate-500 print-text-gray"/><span>{formData.integration.scripture}</span></div>)}<div><h5 className="text-slate-400 text-xs font-bold mb-2 print-text-gray">PRAYER & ACTION</h5><p className="text-slate-300 italic print-text-dark">{formData.integration.prayer_action || '-'}</p></div></div></section>
                                 <section><h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 print-text-gray">Excavation ({formData.symbols.length})</h3><div className="space-y-3">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-lg text-sm print-bg-white print-border print-text-dark"><div className="flex justify-between mb-2"><span className="font-bold text-amber-500 print-text-dark">{s.name}</span><span className="text-[10px] bg-slate-900/50 px-2 py-0.5 rounded text-slate-500 print-bg-white print-text-gray print-border">{s.type}</span></div><p className="text-slate-400 mb-1 print-text-dark">{s.q2}</p>{s.q3 && <p className="text-purple-400/80 italic print-text-gray">{s.q3}</p>}</div>))}</div></section>
                             </div>
                         </div>
@@ -840,33 +444,53 @@
                 </div>
             );
 
+            // ProgressBar
+            const ProgressBar = ({ currentStep }) => (
+                <div className="w-full mb-8 px-2 relative z-10">
+                    <div className="flex justify-between mb-2">
+                        {STEPS.map((step, index) => {
+                            const Icon = step.icon;
+                            const isActive = index === currentStep;
+                            const isCompleted = index < currentStep;
+                            return (
+                                <div key={step.id} className={`flex flex-col items-center w-1/4 relative z-10 transition-all duration-500 ${isActive ? 'opacity-100 transform scale-105' : 'opacity-60'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 border backdrop-blur-md ${isActive ? 'bg-amber-500/90 border-amber-400 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.6)]' : isCompleted ? 'bg-slate-800/80 border-slate-600 text-amber-500/70' : 'bg-slate-900/50 border-slate-700 text-slate-500'}`}><Icon size={18} /></div>
+                                    <span className={`text-xs font-serif tracking-wider hidden md:block drop-shadow-md ${isActive ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{step.title}</span><span className="text-[10px] text-slate-500 uppercase tracking-widest hidden md:block">{step.subtitle}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="h-1 w-full bg-slate-800/50 rounded-full overflow-hidden relative top-[-3.5rem] md:top-auto z-0 mt-4 backdrop-blur-sm"><div className="h-full bg-gradient-to-r from-amber-700 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-700 ease-out" style={{ width: `${((currentStep + 0.5) / 4) * 100}%` }} /></div>
+                </div>
+            );
+
+            // --- Root Return ---
             return (
                 <>
                     <DreamBackground />
                     <div className="max-w-4xl mx-auto min-h-screen flex flex-col p-4 md:p-8 relative z-10">
                         <header className="flex flex-col gap-4 mb-12 pt-4">
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] backdrop-blur-sm border border-white/10">
-                                        <Moon className="text-white drop-shadow-md" size={28} />
-                                    </div>
+                                <a href="." className="flex items-center gap-3 hover:opacity-80 transition-opacity group text-decoration-none">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] backdrop-blur-sm border border-white/10 group-hover:scale-105 transition-transform"><Icons.Moon className="text-white drop-shadow-md" size={28} /></div>
                                     <div><h1 className="text-xl font-serif text-slate-100 tracking-wide drop-shadow-md">靈魂之鏡：夢語聖所 <span className="font-light opacity-60 text-base block md:inline">Soul Mirror</span></h1></div>
-                                </div>
+                                </a>
                                 <div className="flex items-center gap-3 flex-wrap justify-center">
                                     {renderSyncStatus()}
-                                    {user && !user.isAnonymous ? (<div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-500" alt="User" /><button onClick={logout} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors">登出</button></div>) : (<button onClick={loginGoogle} className="flex items-center gap-2 bg-white/90 hover:bg-white text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"><LogIn size={14} /> Google 登入</button>)}
+                                    {user && !user.isAnonymous ? (<div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-500" alt="User" /><button onClick={logout} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors">登出</button></div>) : (<button onClick={loginGoogle} className="flex items-center gap-2 bg-white/90 hover:bg-white text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"><Icons.LogIn size={14} /> Google 登入</button>)}
                                 </div>
                             </div>
                             
                             <div className="flex flex-col md:flex-row items-center justify-between glass-panel p-2 rounded-xl gap-2">
-                                <div className="flex-1 text-center md:text-left">{(!user || user.isAnonymous) && (<div className="flex items-center justify-center md:justify-start gap-2 text-amber-400/90 text-xs px-2 font-medium drop-shadow"><AlertTriangle size={14} /><span>未登入模式：資料僅存於本機，請務必定期匯出備份</span></div>)}</div>
+                                <div className="flex-1 text-center md:text-left">{(!user || user.isAnonymous) && (<div className="flex items-center justify-center md:justify-start gap-2 text-amber-400/90 text-xs px-2 font-medium drop-shadow"><Icons.AlertTriangle size={14} /><span>未登入模式：資料僅存於本機，請務必定期匯出備份</span></div>)}</div>
                                 <div className="flex gap-2">
                                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
-                                    <button onClick={handleImportClick} className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors" title="匯入備份"><Upload size={14} /> 匯入</button>
-                                    <button onClick={handleExport} className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors" title="匯出備份"><Download size={14} /> 匯出</button>
-                                    <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors text-decoration-none" title="前往 Gemini 詢問"><Sparkles size={14} /> 詢問 Gemini</a>
+                                    <button onClick={() => setIsCalendarOpen(true)} className="flex items-center gap-1 hover:bg-slate-700/50 text-amber-100 bg-amber-900/30 px-3 py-1.5 rounded text-xs transition-colors border border-amber-500/30" title="歷史紀錄"><Icons.Calendar size={14} /> 日曆</button>
+                                    <button onClick={handleImportClick} className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors" title="匯入備份"><Icons.Upload size={14} /> 匯入</button>
+                                    <button onClick={handleExport} className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors" title="匯出備份"><Icons.Download size={14} /> 匯出</button>
+                                    <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs transition-colors text-decoration-none" title="前往 Gemini 詢問"><Icons.Sparkles size={14} /> 詢問 Gemini</a>
                                     <div className="w-px bg-slate-700/50 mx-1"></div>
-                                    <button onClick={() => setShowSummary(true)} className="flex items-center gap-1 text-slate-300 hover:text-amber-400 px-3 py-1.5 text-xs transition-colors font-medium"><BookOpenIcon size={14} /> 檢視紀錄卡</button>
+                                    <button onClick={() => setShowSummary(true)} className="flex items-center gap-1 text-slate-300 hover:text-amber-400 px-3 py-1.5 text-xs transition-colors font-medium"><Icons.BookOpen size={14} /> 檢視紀錄卡</button>
                                 </div>
                             </div>
                         </header>
@@ -881,13 +505,35 @@
                         </main>
 
                         <footer className="mt-8 flex justify-between items-center px-2">
-                            <button onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))} disabled={currentStep === 0} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-400 hover:text-white hover:bg-slate-800/30'}`}><ChevronLeft size={20} /> 上一步</button>
-                            {currentStep < 3 ? (<button onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))} className="flex items-center gap-2 bg-slate-100 hover:bg-white text-slate-900 px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-all transform hover:-translate-y-1">下一步 <ChevronRight size={20} /></button>) : (<button onClick={() => setShowSummary(true)} className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 px-8 py-3 rounded-lg font-bold shadow-lg hover:shadow-amber-500/30 transition-all transform hover:-translate-y-1"><Save size={18} /> 完成並預覽</button>)}
+                            <button onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))} disabled={currentStep === 0} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-400 hover:text-white hover:bg-slate-800/30'}`}><Icons.ChevronLeft size={20} /> 上一步</button>
+                            {currentStep < 3 ? (<button onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))} className="flex items-center gap-2 bg-slate-100 hover:bg-white text-slate-900 px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-all transform hover:-translate-y-1">下一步 <Icons.ChevronRight size={20} /></button>) : (<button onClick={() => setShowSummary(true)} className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 px-8 py-3 rounded-lg font-bold shadow-lg hover:shadow-amber-500/30 transition-all transform hover:-translate-y-1"><Icons.Save size={18} /> 完成並預覽</button>)}
                         </footer>
                     </div>
                     
-                    {showWelcome && renderWelcome()}
+                    {showWelcome && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+                            <div className="glass-panel max-w-lg w-full p-8 rounded-2xl relative border-slate-600/50">
+                                <div className="text-center space-y-6">
+                                    <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(245,158,11,0.3)]"><Icons.Moon className="text-amber-400" size={32} /></div>
+                                    <h2 className="text-2xl font-serif text-amber-100 tracking-wide drop-shadow-lg">歡迎來到靈魂之鏡：夢語聖所</h2>
+                                    <blockquote className="text-slate-300 italic font-light leading-relaxed border-l-2 border-amber-500/50 pl-4 text-left">
+                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
+                                        <footer className="mt-3 text-sm text-amber-400/80 not-italic">— 陪你穿越夢境的夥伴 Anne</footer>
+                                    </blockquote>
+                                    <button onClick={() => setShowWelcome(false)} className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5">開始紀錄夢境</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
                     {showSummary && renderSummaryView()}
+                    
+                    <CalendarModal 
+                        isOpen={isCalendarOpen} 
+                        onClose={() => setIsCalendarOpen(false)} 
+                        history={history} 
+                        onSelectDate={handleDateSelect} 
+                    />
                 </>
             );
         }
