@@ -1,683 +1,734 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Moon, 
-  Search, // Replaced Key with Search for Excavation
-  Scale, // Replaced Heart with Scale for Discernment
-  Feather, // Replaced BookOpen with Feather for Integration
-  ChevronRight, 
-  ChevronLeft, 
-  Plus, 
-  Trash2, 
-  Save, 
-  Download,
-  X,
-  Info,
-  Book
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>靈魂之鏡：夢語聖所 Soul Mirror</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-// --- Constants & Types ---
-
-const STEPS = [
-  { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Moon },
-  { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Search }, // Renamed & Icon changed
-  { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Scale }, // Renamed & Icon changed
-  { id: 3, title: '整合', subtitle: 'The Integration', icon: Feather }, // Renamed & Icon changed
-];
-
-const MOOD_OPTIONS = [
-  { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/50 text-red-200 border-red-700' },
-  { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/50 text-orange-200 border-orange-700' },
-  { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/50 text-blue-200 border-blue-700' },
-  { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/50 text-indigo-200 border-indigo-700' },
-  { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/50 text-yellow-200 border-yellow-700' },
-  { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/50 text-purple-200 border-purple-700' },
-  { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700 text-slate-300 border-slate-600' },
-];
-
-const SYMBOL_TYPES = [
-  { label: '人物 (People)', value: 'PERSON' },
-  { label: '物品 (Objects)', value: 'OBJECT' },
-  { label: '地點 (Place)', value: 'PLACE' },
-  { label: '情節 (Events)', value: 'EVENT' },
-];
-
-// Initial State Schema
-const INITIAL_STATE = {
-  id: '', 
-  date: new Date().toISOString().split('T')[0],
-  title: '',
-  narrative: '', // Renamed from content
-  moods: [],
-  waking_mood: '', // New field for Phase 3
-  symbols: [],
-  discernment: { // New Phase 3
-    somatic: '',
-    theological_reflection: '' // Shame vs Hope
-  },
-  integration: { // Phase 4
-    message_to_self: '',
-    scripture: '',
-    prayer_action: ''
-  }
-};
-
-// --- Components ---
-
-const ProgressBar = ({ currentStep }) => {
-  return (
-    <div className="w-full mb-8 px-2">
-      <div className="flex justify-between mb-2">
-        {STEPS.map((step, index) => {
-          const Icon = step.icon;
-          const isActive = index === currentStep;
-          const isCompleted = index < currentStep;
-          
-          return (
-            <div key={step.id} className={`flex flex-col items-center w-1/4 relative z-10 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
-              <div className={`
-                w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 border-2
-                ${isActive ? 'bg-amber-500 border-amber-400 text-slate-900 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 
-                  isCompleted ? 'bg-slate-700 border-slate-600 text-amber-500/50' : 'bg-slate-900 border-slate-700 text-slate-600'}
-              `}>
-                <Icon size={18} />
-              </div>
-              <span className={`text-xs font-serif tracking-wider hidden md:block ${isActive ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
-                {step.title}
-              </span>
-              <span className="text-[10px] text-slate-600 uppercase tracking-widest hidden md:block">{step.subtitle}</span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden relative top-[-3.5rem] md:top-auto z-0 mt-4">
-        <div 
-          className="h-full bg-gradient-to-r from-amber-700 to-amber-400 transition-all duration-500 ease-out"
-          style={{ width: `${((currentStep + 0.5) / 4) * 100}%` }}
-        />
-      </div>
-    </div>
-  );
-};
-
-const Label = ({ children, hint }) => (
-  <label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif">
-    {children}
-    {hint && <span className="block mt-1 text-xs text-slate-500 font-sans font-normal leading-relaxed">{hint}</span>}
-  </label>
-);
-
-const Input = ({ ...props }) => (
-  <input 
-    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-colors"
-    {...props}
-  />
-);
-
-const Textarea = ({ ...props }) => (
-  <textarea 
-    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-colors resize-none leading-relaxed"
-    {...props}
-  />
-);
-
-// --- Main Application ---
-
-export default function SoulMirrorApp() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState(INITIAL_STATE);
-  const [isSymbolModalOpen, setIsSymbolModalOpen] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [showSummary, setShowSummary] = useState(false);
-
-  // Symbol State
-  const [newSymbol, setNewSymbol] = useState({
-    id: null,
-    name: '',
-    type: 'PERSON',
-    q1: '', // Maps to different questions based on type
-    q2: '', 
-    q3: '' 
-  });
-
-  // Init
-  useEffect(() => {
-    const savedData = localStorage.getItem('soul_mirror_draft_v2');
-    if (savedData) {
-      try {
-        setFormData(JSON.parse(savedData));
-        setShowWelcome(false); 
-      } catch (e) {
-        console.error("Failed to parse saved data", e);
-      }
-    } else {
-      setFormData(prev => ({ ...prev, id: crypto.randomUUID() }));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData));
-  }, [formData]);
-
-  // Helpers
-  const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
-  const updateDiscernment = (field, value) => setFormData(prev => ({ ...prev, discernment: { ...prev.discernment, [field]: value } }));
-  const updateIntegration = (field, value) => setFormData(prev => ({ ...prev, integration: { ...prev.integration, [field]: value } }));
-
-  const toggleMood = (moodValue) => {
-    setFormData(prev => {
-      const moods = prev.moods.includes(moodValue)
-        ? prev.moods.filter(m => m !== moodValue)
-        : [...prev.moods, moodValue];
-      return { ...prev, moods };
-    });
-  };
-
-  const handleAddSymbol = () => {
-    if (!newSymbol.name) return;
-    setFormData(prev => ({ ...prev, symbols: [...prev.symbols, { ...newSymbol, id: Date.now() }] }));
-    setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
-    setIsSymbolModalOpen(false);
-  };
-
-  const removeSymbol = (id) => setFormData(prev => ({ ...prev, symbols: prev.symbols.filter(s => s.id !== id) }));
-
-  // --- Step Renderers ---
-
-  const renderWelcome = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-[#0f172a] border border-slate-700 max-w-lg w-full p-8 rounded-2xl shadow-2xl relative">
-        <div className="text-center space-y-6">
-          <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto">
-            <Moon className="text-amber-500" size={32} />
-          </div>
-          <h2 className="text-2xl font-serif text-amber-100">歡迎來到靈魂之鏡：夢語聖所</h2>
-          <blockquote className="text-slate-400 italic font-light leading-relaxed border-l-2 border-slate-700 pl-4 text-left">
-            「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
-            <footer className="mt-2 text-sm text-amber-500/80 not-italic">— 靈修夥伴 Anne</footer>
-          </blockquote>
-          <button 
-            onClick={() => setShowWelcome(false)}
-            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold py-3 rounded-lg transition-all"
-          >
-            開始紀錄夢境
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep1_Capture = () => (
-    <div className="space-y-8 animate-fadeIn">
-      <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500">
-        <h3 className="text-amber-400 font-bold mb-1">Phase 1: 捕捉直覺</h3>
-        <p className="text-slate-400 text-sm">趁意識防衛機制尚未完全運作前，記錄夢的原始樣貌。</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <Label hint="紀錄當下的時節，有時與教會節期或個人生命週期有關。">夢境日期</Label>
-          <Input type="date" value={formData.date} onChange={(e) => updateField('date', e.target.value)} />
-        </div>
-        <div className="md:col-span-2">
-          <Label hint="如果這是一個電影或寓言故事，你會給它什麼名字？">夢境標題 (The Headline)</Label>
-          <Input placeholder="例如：迷失在古老的森林..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} />
-        </div>
-      </div>
-
-      <div>
-        <Label hint="請用『現在式』描述（例如：『我走在街上』而不是『我那時走在街上』），就像你現在正在經歷它一樣。不要過濾任何荒謬的細節。">
-          夢境敘事 (The Narrative)
-        </Label>
-        <Textarea rows={12} placeholder="我現在正身處於..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} />
-      </div>
-
-      <div>
-        <Label hint="直覺的情緒反應（可多選）">夢中情緒色譜</Label>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {MOOD_OPTIONS.map((mood) => {
-            const isSelected = formData.moods.includes(mood.value);
-            return (
-              <button
-                key={mood.value}
-                onClick={() => toggleMood(mood.value)}
-                className={`
-                  px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 flex items-center gap-2
-                  ${isSelected ? mood.color + ' shadow-[0_0_10px_rgba(255,255,255,0.1)] scale-105' : 'bg-transparent border-slate-700 text-slate-500 hover:border-slate-500'}
-                `}
-              >
-                <div className={`w-2 h-2 rounded-full ${mood.color.split(' ')[0].replace('/50','')} `} />
-                {mood.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep2_Excavation = () => {
-    // Dynamic Labels based on Type
-    const getQuestions = (type) => {
-      switch(type) {
-        case 'PERSON': return {
-          l1: '夢中人物是誰？',
-          h1: '是認識的人還是陌生人？',
-          l2: '榮格引導 (主體/內在)',
-          h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？（例如：嚴厲的老師 = 過度自我批判）',
-          l3: '神學引導',
-          h3: '這個人物是否讓你聯想到聖經中的某個角色？或是神透過這個特質在提醒你什麼？'
-        };
-        case 'OBJECT': return {
-          l1: '出現了什麼顯眼的物品？',
-          h1: '如：鑰匙、枯樹、聖經、車子...',
-          l2: '個人聯想 (直覺)',
-          h2: '請不要思考普遍意義。這物品讓你聯想到什麼童年回憶或最近發生的事？',
-          l3: '情緒連結',
-          h3: '看著這個物品，你感覺如何？喜愛、恐懼、還是厭惡？'
-        };
-        case 'PLACE': return {
-          l1: '夢發生在哪裡？',
-          h1: '如：老家、考試會場、教堂、荒野...',
-          l2: '心理狀態 (氛圍)',
-          h2: '這個地方的氛圍是什麼？壓抑、神聖、混亂？這讓你聯想到目前生活的哪個領域？',
-          l3: '神學引導',
-          h3: '這是一個「曠野」（試煉之地）還是一個「迦南地」（應許之地）？你感到神的同在還是缺席？'
-        };
-        case 'EVENT': return {
-          l1: '發生了什麼事？',
-          h1: '如：被追趕、飛翔、迷路...',
-          l2: '榮格引導 (補償機制)',
-          h2: '如果夢境在平衡你清醒時的態度，它在說什麼？（例如：白天過度自信，夢中卻一直在跌倒）',
-          l3: '動力與衝突',
-          h3: '在這個事件中，主要的衝突點是什麼？'
-        };
-        default: return {};
-      }
-    };
-
-    const q = getQuestions(newSymbol.type);
-
-    return (
-      <div className="space-y-6 animate-fadeIn">
-        <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500 mb-6">
-          <h3 className="text-amber-400 font-bold mb-1">Phase 2: 拆解與聯想</h3>
-          <p className="text-slate-400 text-sm">利用「人事時地物」進行擴大聯想，挖掘個人與屬靈意義。</p>
-        </div>
-
-        {/* List */}
-        <div className="space-y-4">
-          {formData.symbols.map((symbol) => (
-            <div key={symbol.id} className="bg-slate-800 border border-slate-700 p-4 rounded-lg hover:border-amber-500/30 transition-colors group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-700 text-amber-400 border border-slate-600">
-                    {SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}
-                  </span>
-                  <h4 className="font-bold text-slate-200">{symbol.name}</h4>
-                </div>
-                <button onClick={() => removeSymbol(symbol.id)} className="text-slate-600 hover:text-red-400 transition-colors">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-              <div className="grid gap-2 text-sm text-slate-400 pl-2 border-l-2 border-slate-700">
-                <p><span className="text-slate-500">解析 1:</span> {symbol.q2}</p>
-                {symbol.q3 && <p><span className="text-slate-500">解析 2:</span> {symbol.q3}</p>}
-              </div>
-            </div>
-          ))}
-
-          <button 
-            onClick={() => setIsSymbolModalOpen(true)}
-            className="w-full py-6 border-2 border-dashed border-slate-700 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/50 transition-all flex flex-col items-center justify-center gap-2 group"
-          >
-            <div className="p-3 bg-slate-800 rounded-full group-hover:bg-slate-700 transition-colors">
-              <Plus size={24} />
-            </div>
-            <span>點擊此處，挖掘夢中的關鍵元素</span>
-          </button>
-        </div>
-
-        {/* Modal */}
-        {isSymbolModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
-            <div className="bg-[#0f172a] border border-slate-600 rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
-                <X size={24} />
-              </button>
-              
-              <h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">
-                <Search size={20} /> 挖掘元素
-              </h3>
-
-              <div className="space-y-6">
-                <div>
-                  <Label>這個元素的類型是？</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                    {SYMBOL_TYPES.map(t => (
-                      <button
-                        key={t.value}
-                        onClick={() => setNewSymbol({ ...newSymbol, type: t.value })}
-                        className={`p-2 text-xs rounded border transition-colors ${newSymbol.type === t.value ? 'bg-amber-900/30 border-amber-500 text-amber-200' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-900 rounded-lg border border-slate-800 space-y-4">
-                  <div>
-                    <Label hint={q.h1}>{q.l1}</Label>
-                    <Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} />
-                  </div>
-                  <div>
-                    <Label hint={q.h2}>{q.l2}</Label>
-                    <Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} />
-                  </div>
-                  <div>
-                    <Label hint={q.h3}>{q.l3}</Label>
-                    <Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                  <button onClick={() => setIsSymbolModalOpen(false)} className="px-4 py-2 text-slate-400 hover:text-white">取消</button>
-                  <button onClick={handleAddSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50">確認新增</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderStep3_Discernment = () => (
-    <div className="space-y-8 animate-fadeIn">
-      <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500">
-        <h3 className="text-amber-400 font-bold mb-1">Phase 3: 感受與分辨</h3>
-        <p className="text-slate-400 text-sm">連結情感中樞與屬靈聽力，分辨聲音的源頭。</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800">
-          <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2">
-            <Moon size={16} /> 夢中情緒
-          </h4>
-          <div className="flex flex-wrap gap-2">
-             {formData.moods.length > 0 ? formData.moods.map(m => (
-               <span key={m} className="px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs border border-slate-700">
-                 {MOOD_OPTIONS.find(opt => opt.value === m)?.label}
-               </span>
-             )) : <span className="text-slate-600 text-sm italic">未選擇</span>}
-          </div>
-        </div>
-
-        <div>
-          <Label hint="夢裡的你感到恐懼，但醒來的你是否感到釋放？情緒的反差往往藏著真相。">醒後情緒 (Waking Emotion)</Label>
-          <Input 
-            placeholder="醒來後的第一個感覺是..." 
-            value={formData.waking_mood}
-            onChange={(e) => updateField('waking_mood', e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label hint="記錄完這個夢，你的身體哪個部位有感覺？（胸口悶、肩膀鬆、腹部熱）。身體是潛意識最誠實的出口。">
-          身體感受 (Somatic Marker)
-        </Label>
-        <Input 
-          placeholder="我的身體感覺..."
-          value={formData.discernment.somatic}
-          onChange={(e) => updateDiscernment('somatic', e.target.value)}
-        />
-      </div>
-
-      <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-900/30">
-        <Label hint="這個夢境帶給你的核心訊息，是讓你感到『定罪/羞愧』（來自控告者）還是『悔改/盼望』（來自聖靈）？請試著分辨這個聲音的源頭。">
-          屬靈分辨 (Theological Reflection)
-        </Label>
-        <Textarea 
-          rows={5}
-          className="bg-slate-900/80 border-purple-900/30 focus:border-purple-500/50"
-          placeholder="我認為這個聲音來自..."
-          value={formData.discernment.theological_reflection}
-          onChange={(e) => updateDiscernment('theological_reflection', e.target.value)}
-        />
-      </div>
-    </div>
-  );
-
-  const renderStep4_Integration = () => (
-    <div className="space-y-8 animate-fadeIn h-full flex flex-col">
-      <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500 flex-shrink-0">
-        <h3 className="text-amber-400 font-bold mb-1">Phase 4: 行動與儀式</h3>
-        <p className="text-slate-400 text-sm">將潛意識的洞見帶入意識層面，產生轉化。</p>
-      </div>
-
-      <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
-        <div>
-          <Label hint="如果這個夢是『真實的自己』(Self) 寫給『小我』(Ego) 的一封信，它想說的一句話是什麼？">
-            給真實自己的信 (Message to Self)
-          </Label>
-          <div className="relative">
-            <Feather className="absolute top-3 left-3 text-slate-500" size={18} />
-            <Textarea 
-              rows={3} 
-              className="pl-10 font-serif italic text-lg text-amber-100"
-              placeholder="親愛的..."
-              value={formData.integration.message_to_self}
-              onChange={(e) => updateIntegration('message_to_self', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label hint="輸入關鍵字，或記錄下神讓你想起的一段經文。">
-            聖經金句聯想 (Scriptural Connection)
-          </Label>
-          <div className="relative">
-            <Book className="absolute top-3 left-3 text-slate-500" size={18} />
-            <Input 
-              className="pl-10"
-              placeholder="例如：詩篇 23:4..."
-              value={formData.integration.scripture}
-              onChange={(e) => updateIntegration('scripture', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label hint="為了回應這個夢，你今天願意做一個小小的行動嗎？或者寫下一段禱告交託給神。">
-            禱告與行動 (Prayer & Action)
-          </Label>
-          <Textarea 
-            rows={5}
-            className="border-amber-500/30 focus:border-amber-500"
-            placeholder="主啊，透過這個夢，我願意..."
-            value={formData.integration.prayer_action}
-            onChange={(e) => updateIntegration('prayer_action', e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSummaryView = () => (
-    <div className="fixed inset-0 z-50 bg-[#0f172a] overflow-y-auto animate-fadeIn">
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
-          <div>
-            <h2 className="text-3xl font-serif text-amber-500 mb-1">夢境紀錄卡</h2>
-            <p className="text-slate-500 text-sm">{formData.date} | {formData.title}</p>
-          </div>
-          <div className="flex gap-3">
-             <button onClick={() => setShowSummary(false)} className="px-4 py-2 text-slate-400 hover:text-white">
-               返回編輯
-             </button>
-             <button 
-              onClick={() => {
-                const dataStr = JSON.stringify(formData, null, 2);
-                const blob = new Blob([dataStr], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `dream_${formData.date}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-              className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 px-4 py-2 rounded font-bold"
-            >
-               <Download size={18} /> 下載 JSON
-             </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">The Narrative</h3>
-              <p className="text-slate-200 whitespace-pre-wrap leading-loose font-light font-serif text-lg">
-                {formData.narrative}
-              </p>
-            </section>
-            
-            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-               <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Discernment</h3>
-               <div className="space-y-4">
-                 <div><span className="text-slate-500 text-sm">夢中情緒：</span> <span className="text-slate-300">{formData.moods.join(', ') || '-'}</span></div>
-                 <div><span className="text-slate-500 text-sm">醒後情緒：</span> <span className="text-slate-300">{formData.waking_mood || '-'}</span></div>
-                 <div><span className="text-slate-500 text-sm">身體感受：</span> <span className="text-slate-300">{formData.discernment.somatic || '-'}</span></div>
-                 <div className="pt-2 border-t border-slate-800">
-                   <p className="text-purple-300 italic text-sm">{formData.discernment.theological_reflection || '尚無屬靈分辨紀錄'}</p>
-                 </div>
-               </div>
-            </section>
-          </div>
-
-          <div className="space-y-6">
-            <section className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20">
-              <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-4">Integration</h3>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-serif text-xl text-slate-100 mb-2">"{formData.integration.message_to_self || '...'}"</h4>
-                  <p className="text-right text-xs text-slate-500">— 給自己的信</p>
-                </div>
-                {formData.integration.scripture && (
-                  <div className="flex items-start gap-2 text-slate-300 bg-slate-900/50 p-3 rounded">
-                    <Book size={16} className="mt-1 text-slate-500"/>
-                    <span>{formData.integration.scripture}</span>
-                  </div>
-                )}
-                <div>
-                  <h5 className="text-slate-400 text-xs font-bold mb-2">PRAYER & ACTION</h5>
-                  <p className="text-slate-300 italic">{formData.integration.prayer_action || '-'}</p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Excavation ({formData.symbols.length})</h3>
-              <div className="space-y-3">
-                {formData.symbols.map(s => (
-                  <div key={s.id} className="bg-slate-800 p-4 rounded-lg text-sm">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-bold text-amber-500">{s.name}</span>
-                      <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-500">{s.type}</span>
-                    </div>
-                    <p className="text-slate-400 mb-1">{s.q2}</p>
-                    {s.q3 && <p className="text-purple-400/80 italic">{s.q3}</p>}
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-amber-500/30 relative">
-      {showWelcome && renderWelcome()}
-      {showSummary && renderSummaryView()}
-
-      <div className="max-w-4xl mx-auto min-h-screen flex flex-col p-4 md:p-8">
+    <!-- Lucide Icons (Development Version for Browser) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
         
-        {/* Header */}
-        <header className="flex items-center justify-between mb-12 pt-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg flex items-center justify-center shadow-lg shadow-amber-900/20">
-              <Moon className="text-slate-900" size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-serif text-slate-100 tracking-wide">靈魂之鏡：夢語聖所 <span className="font-light opacity-50 text-base">Soul Mirror</span></h1>
-            </div>
-          </div>
-          <button onClick={() => setShowSummary(true)} className="text-xs text-slate-500 hover:text-amber-500 flex items-center gap-1 transition-colors">
-            <BookOpenIcon size={14} /> 檢視紀錄卡
-          </button>
-        </header>
-
-        {/* Progress */}
-        <ProgressBar currentStep={currentStep} />
-
-        {/* Content Area */}
-        <main className="flex-1 bg-slate-900 border border-slate-800 p-6 md:p-10 rounded-2xl shadow-2xl relative min-h-[500px] flex flex-col">
-          {currentStep === 0 && renderStep1_Capture()}
-          {currentStep === 1 && renderStep2_Excavation()}
-          {currentStep === 2 && renderStep3_Discernment()}
-          {currentStep === 3 && renderStep4_Integration()}
-        </main>
-
-        {/* Footer */}
-        <footer className="mt-8 flex justify-between items-center px-2">
-          <button
-            onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-            disabled={currentStep === 0}
-            className={`
-              flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all
-              ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-400 hover:text-white hover:bg-slate-800'}
-            `}
-          >
-            <ChevronLeft size={20} /> 上一步
-          </button>
-
-          {currentStep < 3 ? (
-            <button
-              onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
-              className="flex items-center gap-2 bg-slate-100 hover:bg-white text-slate-900 px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all transform hover:-translate-y-1"
-            >
-              下一步 <ChevronRight size={20} />
-            </button>
-          ) : (
-             <button
-              onClick={() => setShowSummary(true)}
-              className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 px-8 py-3 rounded-lg font-bold shadow-lg transition-colors"
-            >
-              <Save size={18} /> 完成並預覽
-            </button>
-          )}
-        </footer>
-
-      </div>
-
-      <style>{`
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .font-serif {
+            font-family: 'Noto Serif TC', serif;
+        }
+        
+        /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; }
         .animate-slideUp { animation: slideUp 0.4s ease-out forwards; }
+        
+        /* Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { bg: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 10px; }
-      `}</style>
-    </div>
-  );
-}
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-200">
+    <div id="root"></div>
 
-// Icon helper
-const BookOpenIcon = ({size, className}) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-);
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons Wrapper ---
+        // Lucide icons in standard HTML script tag expose 'lucide' global
+        // We create simple React wrappers for the icons used
+        const IconWrapper = ({ name, size = 24, className, ...props }) => {
+            React.useEffect(() => {
+                lucide.createIcons();
+            }, []);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }} {...props}></i>;
+        };
+
+        const Moon = (props) => <IconWrapper name="moon" {...props} />;
+        const Search = (props) => <IconWrapper name="search" {...props} />;
+        const Scale = (props) => <IconWrapper name="scale" {...props} />;
+        const Feather = (props) => <IconWrapper name="feather" {...props} />;
+        const ChevronRight = (props) => <IconWrapper name="chevron-right" {...props} />;
+        const ChevronLeft = (props) => <IconWrapper name="chevron-left" {...props} />;
+        const Plus = (props) => <IconWrapper name="plus" {...props} />;
+        const Trash2 = (props) => <IconWrapper name="trash-2" {...props} />;
+        const Save = (props) => <IconWrapper name="save" {...props} />;
+        const Download = (props) => <IconWrapper name="download" {...props} />;
+        const X = (props) => <IconWrapper name="x" {...props} />;
+        const Info = (props) => <IconWrapper name="info" {...props} />;
+        const Book = (props) => <IconWrapper name="book" {...props} />;
+        const BookOpenIcon = (props) => <IconWrapper name="book-open" {...props} />;
+
+        // --- Constants & Types ---
+
+        const STEPS = [
+            { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Moon },
+            { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Search },
+            { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Scale },
+            { id: 3, title: '整合', subtitle: 'The Integration', icon: Feather },
+        ];
+
+        const MOOD_OPTIONS = [
+            { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/50 text-red-200 border-red-700' },
+            { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/50 text-orange-200 border-orange-700' },
+            { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/50 text-blue-200 border-blue-700' },
+            { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/50 text-indigo-200 border-indigo-700' },
+            { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/50 text-yellow-200 border-yellow-700' },
+            { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/50 text-purple-200 border-purple-700' },
+            { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700 text-slate-300 border-slate-600' },
+        ];
+
+        const SYMBOL_TYPES = [
+            { label: '人物 (People)', value: 'PERSON' },
+            { label: '物品 (Objects)', value: 'OBJECT' },
+            { label: '地點 (Place)', value: 'PLACE' },
+            { label: '情節 (Events)', value: 'EVENT' },
+        ];
+
+        const INITIAL_STATE = {
+            id: '', 
+            date: new Date().toISOString().split('T')[0],
+            title: '',
+            narrative: '', 
+            moods: [],
+            waking_mood: '', 
+            symbols: [],
+            discernment: { 
+                somatic: '',
+                theological_reflection: '' 
+            },
+            integration: { 
+                message_to_self: '',
+                scripture: '',
+                prayer_action: ''
+            }
+        };
+
+        // --- Components ---
+
+        const ProgressBar = ({ currentStep }) => {
+            return (
+                <div className="w-full mb-8 px-2">
+                    <div className="flex justify-between mb-2">
+                        {STEPS.map((step, index) => {
+                            const Icon = step.icon;
+                            const isActive = index === currentStep;
+                            const isCompleted = index < currentStep;
+                            
+                            return (
+                                <div key={step.id} className={`flex flex-col items-center w-1/4 relative z-10 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                                    <div className={`
+                                        w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 border-2
+                                        ${isActive ? 'bg-amber-500 border-amber-400 text-slate-900 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 
+                                        isCompleted ? 'bg-slate-700 border-slate-600 text-amber-500/50' : 'bg-slate-900 border-slate-700 text-slate-600'}
+                                    `}>
+                                        <Icon size={18} />
+                                    </div>
+                                    <span className={`text-xs font-serif tracking-wider hidden md:block ${isActive ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
+                                        {step.title}
+                                    </span>
+                                    <span className="text-[10px] text-slate-600 uppercase tracking-widest hidden md:block">{step.subtitle}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden relative top-[-3.5rem] md:top-auto z-0 mt-4">
+                        <div 
+                        className="h-full bg-gradient-to-r from-amber-700 to-amber-400 transition-all duration-500 ease-out"
+                        style={{ width: `${((currentStep + 0.5) / 4) * 100}%` }}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const Label = ({ children, hint }) => (
+            <label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif">
+                {children}
+                {hint && <span className="block mt-1 text-xs text-slate-500 font-sans font-normal leading-relaxed">{hint}</span>}
+            </label>
+        );
+
+        const Input = ({ ...props }) => (
+            <input 
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-colors"
+                {...props}
+            />
+        );
+
+        const Textarea = ({ ...props }) => (
+            <textarea 
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-colors resize-none leading-relaxed"
+                {...props}
+            />
+        );
+
+        // --- Main Application ---
+
+        function SoulMirrorApp() {
+            const [currentStep, setCurrentStep] = useState(0);
+            const [formData, setFormData] = useState(INITIAL_STATE);
+            const [isSymbolModalOpen, setIsSymbolModalOpen] = useState(false);
+            const [showWelcome, setShowWelcome] = useState(true);
+            const [showSummary, setShowSummary] = useState(false);
+
+            // Symbol State
+            const [newSymbol, setNewSymbol] = useState({
+                id: null,
+                name: '',
+                type: 'PERSON',
+                q1: '', 
+                q2: '', 
+                q3: '' 
+            });
+
+            // Trigger icon refresh when DOM updates
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+
+            // Init
+            useEffect(() => {
+                const savedData = localStorage.getItem('soul_mirror_draft_v2');
+                if (savedData) {
+                    try {
+                        setFormData(JSON.parse(savedData));
+                        setShowWelcome(false); 
+                    } catch (e) {
+                        console.error("Failed to parse saved data", e);
+                    }
+                } else {
+                    setFormData(prev => ({ ...prev, id: crypto.randomUUID() }));
+                }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('soul_mirror_draft_v2', JSON.stringify(formData));
+            }, [formData]);
+
+            // Helpers
+            const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+            const updateDiscernment = (field, value) => setFormData(prev => ({ ...prev, discernment: { ...prev.discernment, [field]: value } }));
+            const updateIntegration = (field, value) => setFormData(prev => ({ ...prev, integration: { ...prev.integration, [field]: value } }));
+
+            const toggleMood = (moodValue) => {
+                setFormData(prev => {
+                const moods = prev.moods.includes(moodValue)
+                    ? prev.moods.filter(m => m !== moodValue)
+                    : [...prev.moods, moodValue];
+                return { ...prev, moods };
+                });
+            };
+
+            const handleAddSymbol = () => {
+                if (!newSymbol.name) return;
+                setFormData(prev => ({ ...prev, symbols: [...prev.symbols, { ...newSymbol, id: Date.now() }] }));
+                setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
+                setIsSymbolModalOpen(false);
+            };
+
+            const removeSymbol = (id) => setFormData(prev => ({ ...prev, symbols: prev.symbols.filter(s => s.id !== id) }));
+
+            // --- Step Renderers ---
+
+            const renderWelcome = () => (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-[#0f172a] border border-slate-700 max-w-lg w-full p-8 rounded-2xl shadow-2xl relative">
+                        <div className="text-center space-y-6">
+                            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto">
+                                <Moon className="text-amber-500" size={32} />
+                            </div>
+                            <h2 className="text-2xl font-serif text-amber-100">歡迎來到靈魂之鏡：夢語聖所</h2>
+                            <blockquote className="text-slate-400 italic font-light leading-relaxed border-l-2 border-slate-700 pl-4 text-left">
+                                「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
+                                <footer className="mt-2 text-sm text-amber-500/80 not-italic">— 靈修夥伴 Anne</footer>
+                            </blockquote>
+                            <button 
+                                onClick={() => setShowWelcome(false)}
+                                className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold py-3 rounded-lg transition-all"
+                            >
+                                開始紀錄夢境
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderStep1_Capture = () => (
+                <div className="space-y-8 animate-fadeIn">
+                    <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500">
+                        <h3 className="text-amber-400 font-bold mb-1">Phase 1: 捕捉直覺</h3>
+                        <p className="text-slate-400 text-sm">趁意識防衛機制尚未完全運作前，記錄夢的原始樣貌。</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <Label hint="紀錄當下的時節，有時與教會節期或個人生命週期有關。">夢境日期</Label>
+                            <Input type="date" value={formData.date} onChange={(e) => updateField('date', e.target.value)} />
+                        </div>
+                        <div className="md:col-span-2">
+                            <Label hint="如果這是一個電影或寓言故事，你會給它什麼名字？">夢境標題 (The Headline)</Label>
+                            <Input placeholder="例如：迷失在古老的森林..." value={formData.title} onChange={(e) => updateField('title', e.target.value)} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label hint="請用『現在式』描述（例如：『我走在街上』而不是『我那時走在街上』），就像你現在正在經歷它一樣。不要過濾任何荒謬的細節。">
+                        夢境敘事 (The Narrative)
+                        </Label>
+                        <Textarea rows={12} placeholder="我現在正身處於..." value={formData.narrative} onChange={(e) => updateField('narrative', e.target.value)} />
+                    </div>
+
+                    <div>
+                        <Label hint="直覺的情緒反應（可多選）">夢中情緒色譜</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                        {MOOD_OPTIONS.map((mood) => {
+                            const isSelected = formData.moods.includes(mood.value);
+                            return (
+                                <button
+                                    key={mood.value}
+                                    onClick={() => toggleMood(mood.value)}
+                                    className={`
+                                    px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 flex items-center gap-2
+                                    ${isSelected ? mood.color + ' shadow-[0_0_10px_rgba(255,255,255,0.1)] scale-105' : 'bg-transparent border-slate-700 text-slate-500 hover:border-slate-500'}
+                                    `}
+                                >
+                                    <div className={`w-2 h-2 rounded-full ${mood.color.split(' ')[0].replace('/50','')} `} />
+                                    {mood.label}
+                                </button>
+                            );
+                        })}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderStep2_Excavation = () => {
+                const getQuestions = (type) => {
+                    switch(type) {
+                        case 'PERSON': return {
+                        l1: '夢中人物是誰？',
+                        h1: '是認識的人還是陌生人？',
+                        l2: '榮格引導 (主體/內在)',
+                        h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？（例如：嚴厲的老師 = 過度自我批判）',
+                        l3: '神學引導',
+                        h3: '這個人物是否讓你聯想到聖經中的某個角色？或是神透過這個特質在提醒你什麼？'
+                        };
+                        case 'OBJECT': return {
+                        l1: '出現了什麼顯眼的物品？',
+                        h1: '如：鑰匙、枯樹、聖經、車子...',
+                        l2: '個人聯想 (直覺)',
+                        h2: '請不要思考普遍意義。這物品讓你聯想到什麼童年回憶或最近發生的事？',
+                        l3: '情緒連結',
+                        h3: '看著這個物品，你感覺如何？喜愛、恐懼、還是厭惡？'
+                        };
+                        case 'PLACE': return {
+                        l1: '夢發生在哪裡？',
+                        h1: '如：老家、考試會場、教堂、荒野...',
+                        l2: '心理狀態 (氛圍)',
+                        h2: '這個地方的氛圍是什麼？壓抑、神聖、混亂？這讓你聯想到目前生活的哪個領域？',
+                        l3: '神學引導',
+                        h3: '這是一個「曠野」（試煉之地）還是一個「迦南地」（應許之地）？你感到神的同在還是缺席？'
+                        };
+                        case 'EVENT': return {
+                        l1: '發生了什麼事？',
+                        h1: '如：被追趕、飛翔、迷路...',
+                        l2: '榮格引導 (補償機制)',
+                        h2: '如果夢境在平衡你清醒時的態度，它在說什麼？（例如：白天過度自信，夢中卻一直在跌倒）',
+                        l3: '動力與衝突',
+                        h3: '在這個事件中，主要的衝突點是什麼？'
+                        };
+                        default: return {};
+                    }
+                };
+
+                const q = getQuestions(newSymbol.type);
+
+                return (
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500 mb-6">
+                            <h3 className="text-amber-400 font-bold mb-1">Phase 2: 拆解與聯想</h3>
+                            <p className="text-slate-400 text-sm">利用「人事時地物」進行擴大聯想，挖掘個人與屬靈意義。</p>
+                        </div>
+
+                        {/* List */}
+                        <div className="space-y-4">
+                            {formData.symbols.map((symbol) => (
+                                <div key={symbol.id} className="bg-slate-800 border border-slate-700 p-4 rounded-lg hover:border-amber-500/30 transition-colors group">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-700 text-amber-400 border border-slate-600">
+                                            {SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}
+                                        </span>
+                                        <h4 className="font-bold text-slate-200">{symbol.name}</h4>
+                                        </div>
+                                        <button onClick={() => removeSymbol(symbol.id)} className="text-slate-600 hover:text-red-400 transition-colors">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="grid gap-2 text-sm text-slate-400 pl-2 border-l-2 border-slate-700">
+                                        <p><span className="text-slate-500">解析 1:</span> {symbol.q2}</p>
+                                        {symbol.q3 && <p><span className="text-slate-500">解析 2:</span> {symbol.q3}</p>}
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button 
+                                onClick={() => setIsSymbolModalOpen(true)}
+                                className="w-full py-6 border-2 border-dashed border-slate-700 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/50 transition-all flex flex-col items-center justify-center gap-2 group"
+                            >
+                                <div className="p-3 bg-slate-800 rounded-full group-hover:bg-slate-700 transition-colors">
+                                <Plus size={24} />
+                                </div>
+                                <span>點擊此處，挖掘夢中的關鍵元素</span>
+                            </button>
+                        </div>
+
+                        {/* Modal */}
+                        {isSymbolModalOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
+                                <div className="bg-[#0f172a] border border-slate-600 rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar">
+                                    <button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                                        <X size={24} />
+                                    </button>
+                                    
+                                    <h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">
+                                        <Search size={20} /> 挖掘元素
+                                    </h3>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <Label>這個元素的類型是？</Label>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                                                {SYMBOL_TYPES.map(t => (
+                                                <button
+                                                    key={t.value}
+                                                    onClick={() => setNewSymbol({ ...newSymbol, type: t.value })}
+                                                    className={`p-2 text-xs rounded border transition-colors ${newSymbol.type === t.value ? 'bg-amber-900/30 border-amber-500 text-amber-200' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+                                                >
+                                                    {t.label}
+                                                </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 bg-slate-900 rounded-lg border border-slate-800 space-y-4">
+                                        <div>
+                                            <Label hint={q.h1}>{q.l1}</Label>
+                                            <Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} />
+                                        </div>
+                                        <div>
+                                            <Label hint={q.h2}>{q.l2}</Label>
+                                            <Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} />
+                                        </div>
+                                        <div>
+                                            <Label hint={q.h3}>{q.l3}</Label>
+                                            <Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} />
+                                        </div>
+                                        </div>
+
+                                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                                            <button onClick={() => setIsSymbolModalOpen(false)} className="px-4 py-2 text-slate-400 hover:text-white">取消</button>
+                                            <button onClick={handleAddSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50">確認新增</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const renderStep3_Discernment = () => (
+                <div className="space-y-8 animate-fadeIn">
+                    <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500">
+                        <h3 className="text-amber-400 font-bold mb-1">Phase 3: 感受與分辨</h3>
+                        <p className="text-slate-400 text-sm">連結情感中樞與屬靈聽力，分辨聲音的源頭。</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800">
+                        <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2">
+                            <Moon size={16} /> 夢中情緒
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                            {formData.moods.length > 0 ? formData.moods.map(m => (
+                            <span key={m} className="px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs border border-slate-700">
+                                {MOOD_OPTIONS.find(opt => opt.value === m)?.label}
+                            </span>
+                            )) : <span className="text-slate-600 text-sm italic">未選擇</span>}
+                        </div>
+                        </div>
+
+                        <div>
+                            <Label hint="夢裡的你感到恐懼，但醒來的你是否感到釋放？情緒的反差往往藏著真相。">醒後情緒 (Waking Emotion)</Label>
+                            <Input 
+                                placeholder="醒來後的第一個感覺是..." 
+                                value={formData.waking_mood}
+                                onChange={(e) => updateField('waking_mood', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label hint="記錄完這個夢，你的身體哪個部位有感覺？（胸口悶、肩膀鬆、腹部熱）。身體是潛意識最誠實的出口。">
+                        身體感受 (Somatic Marker)
+                        </Label>
+                        <Input 
+                            placeholder="我的身體感覺..."
+                            value={formData.discernment.somatic}
+                            onChange={(e) => updateDiscernment('somatic', e.target.value)}
+                        />
+                    </div>
+
+                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-900/30">
+                        <Label hint="這個夢境帶給你的核心訊息，是讓你感到『定罪/羞愧』（來自控告者）還是『悔改/盼望』（來自聖靈）？請試著分辨這個聲音的源頭。">
+                        屬靈分辨 (Theological Reflection)
+                        </Label>
+                        <Textarea 
+                            rows={5}
+                            className="bg-slate-900/80 border-purple-900/30 focus:border-purple-500/50"
+                            placeholder="我認為這個聲音來自..."
+                            value={formData.discernment.theological_reflection}
+                            onChange={(e) => updateDiscernment('theological_reflection', e.target.value)}
+                        />
+                    </div>
+                </div>
+            );
+
+            const renderStep4_Integration = () => (
+                <div className="space-y-8 animate-fadeIn h-full flex flex-col">
+                    <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-amber-500 flex-shrink-0">
+                        <h3 className="text-amber-400 font-bold mb-1">Phase 4: 行動與儀式</h3>
+                        <p className="text-slate-400 text-sm">將潛意識的洞見帶入意識層面，產生轉化。</p>
+                    </div>
+
+                    <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
+                        <div>
+                        <Label hint="如果這個夢是『真實的自己』(Self) 寫給『小我』(Ego) 的一封信，它想說的一句話是什麼？">
+                            給真實自己的信 (Message to Self)
+                        </Label>
+                        <div className="relative">
+                            <Feather className="absolute top-3 left-3 text-slate-500" size={18} />
+                            <Textarea 
+                                rows={3} 
+                                className="pl-10 font-serif italic text-lg text-amber-100"
+                                placeholder="親愛的..."
+                                value={formData.integration.message_to_self}
+                                onChange={(e) => updateIntegration('message_to_self', e.target.value)}
+                            />
+                        </div>
+                        </div>
+
+                        <div>
+                            <Label hint="輸入關鍵字，或記錄下神讓你想起的一段經文。">
+                                聖經金句聯想 (Scriptural Connection)
+                            </Label>
+                            <div className="relative">
+                                <Book className="absolute top-3 left-3 text-slate-500" size={18} />
+                                <Input 
+                                className="pl-10"
+                                placeholder="例如：詩篇 23:4..."
+                                value={formData.integration.scripture}
+                                onChange={(e) => updateIntegration('scripture', e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label hint="為了回應這個夢，你今天願意做一個小小的行動嗎？或者寫下一段禱告交託給神。">
+                                禱告與行動 (Prayer & Action)
+                            </Label>
+                            <Textarea 
+                                rows={5}
+                                className="border-amber-500/30 focus:border-amber-500"
+                                placeholder="主啊，透過這個夢，我願意..."
+                                value={formData.integration.prayer_action}
+                                onChange={(e) => updateIntegration('prayer_action', e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderSummaryView = () => (
+                <div className="fixed inset-0 z-50 bg-[#0f172a] overflow-y-auto animate-fadeIn">
+                    <div className="max-w-4xl mx-auto p-8">
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+                        <div>
+                            <h2 className="text-3xl font-serif text-amber-500 mb-1">夢境紀錄卡</h2>
+                            <p className="text-slate-500 text-sm">{formData.date} | {formData.title}</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowSummary(false)} className="px-4 py-2 text-slate-400 hover:text-white">
+                            返回編輯
+                            </button>
+                            <button 
+                            onClick={() => {
+                                const dataStr = JSON.stringify(formData, null, 2);
+                                const blob = new Blob([dataStr], { type: "application/json" });
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `dream_${formData.date}.json`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 px-4 py-2 rounded font-bold"
+                            >
+                            <Download size={18} /> 下載 JSON
+                            </button>
+                        </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">The Narrative</h3>
+                            <p className="text-slate-200 whitespace-pre-wrap leading-loose font-light font-serif text-lg">
+                                {formData.narrative}
+                            </p>
+                            </section>
+                            
+                            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Discernment</h3>
+                            <div className="space-y-4">
+                                <div><span className="text-slate-500 text-sm">夢中情緒：</span> <span className="text-slate-300">{formData.moods.join(', ') || '-'}</span></div>
+                                <div><span className="text-slate-500 text-sm">醒後情緒：</span> <span className="text-slate-300">{formData.waking_mood || '-'}</span></div>
+                                <div><span className="text-slate-500 text-sm">身體感受：</span> <span className="text-slate-300">{formData.discernment.somatic || '-'}</span></div>
+                                <div className="pt-2 border-t border-slate-800">
+                                <p className="text-purple-300 italic text-sm">{formData.discernment.theological_reflection || '尚無屬靈分辨紀錄'}</p>
+                                </div>
+                            </div>
+                            </section>
+                        </div>
+
+                        <div className="space-y-6">
+                            <section className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20">
+                            <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-4">Integration</h3>
+                            <div className="space-y-6">
+                                <div>
+                                <h4 className="font-serif text-xl text-slate-100 mb-2">"{formData.integration.message_to_self || '...'}"</h4>
+                                <p className="text-right text-xs text-slate-500">— 給自己的信</p>
+                                </div>
+                                {formData.integration.scripture && (
+                                <div className="flex items-start gap-2 text-slate-300 bg-slate-900/50 p-3 rounded">
+                                    <Book size={16} className="mt-1 text-slate-500"/>
+                                    <span>{formData.integration.scripture}</span>
+                                </div>
+                                )}
+                                <div>
+                                <h5 className="text-slate-400 text-xs font-bold mb-2">PRAYER & ACTION</h5>
+                                <p className="text-slate-300 italic">{formData.integration.prayer_action || '-'}</p>
+                                </div>
+                            </div>
+                            </section>
+
+                            <section>
+                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Excavation ({formData.symbols.length})</h3>
+                            <div className="space-y-3">
+                                {formData.symbols.map(s => (
+                                <div key={s.id} className="bg-slate-800 p-4 rounded-lg text-sm">
+                                    <div className="flex justify-between mb-2">
+                                    <span className="font-bold text-amber-500">{s.name}</span>
+                                    <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-500">{s.type}</span>
+                                    </div>
+                                    <p className="text-slate-400 mb-1">{s.q2}</p>
+                                    {s.q3 && <p className="text-purple-400/80 italic">{s.q3}</p>}
+                                </div>
+                                ))}
+                            </div>
+                            </section>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-amber-500/30 relative">
+                    {showWelcome && renderWelcome()}
+                    {showSummary && renderSummaryView()}
+
+                    <div className="max-w-4xl mx-auto min-h-screen flex flex-col p-4 md:p-8">
+                        
+                        {/* Header */}
+                        <header className="flex items-center justify-between mb-12 pt-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg flex items-center justify-center shadow-lg shadow-amber-900/20">
+                                    <Moon className="text-slate-900" size={24} />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-serif text-slate-100 tracking-wide">靈魂之鏡：夢語聖所 <span className="font-light opacity-50 text-base">Soul Mirror</span></h1>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowSummary(true)} className="text-xs text-slate-500 hover:text-amber-500 flex items-center gap-1 transition-colors">
+                                <BookOpenIcon size={14} /> 檢視紀錄卡
+                            </button>
+                        </header>
+
+                        {/* Progress */}
+                        <ProgressBar currentStep={currentStep} />
+
+                        {/* Content Area */}
+                        <main className="flex-1 bg-slate-900 border border-slate-800 p-6 md:p-10 rounded-2xl shadow-2xl relative min-h-[500px] flex flex-col">
+                            {currentStep === 0 && renderStep1_Capture()}
+                            {currentStep === 1 && renderStep2_Excavation()}
+                            {currentStep === 2 && renderStep3_Discernment()}
+                            {currentStep === 3 && renderStep4_Integration()}
+                        </main>
+
+                        {/* Footer */}
+                        <footer className="mt-8 flex justify-between items-center px-2">
+                            <button
+                                onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
+                                disabled={currentStep === 0}
+                                className={`
+                                flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all
+                                ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-400 hover:text-white hover:bg-slate-800'}
+                                `}
+                            >
+                                <ChevronLeft size={20} /> 上一步
+                            </button>
+
+                            {currentStep < 3 ? (
+                                <button
+                                onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
+                                className="flex items-center gap-2 bg-slate-100 hover:bg-white text-slate-900 px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all transform hover:-translate-y-1"
+                                >
+                                下一步 <ChevronRight size={20} />
+                                </button>
+                            ) : (
+                                <button
+                                onClick={() => setShowSummary(true)}
+                                className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 px-8 py-3 rounded-lg font-bold shadow-lg transition-colors"
+                                >
+                                <Save size={18} /> 完成並預覽
+                                </button>
+                            )}
+                        </footer>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SoulMirrorApp />);
+    </script>
+</body>
+</html>
