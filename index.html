@@ -269,13 +269,20 @@
             MicOff: (p) => <IconWrapper name="mic-off" {...p} />,
             Pencil: (p) => <IconWrapper name="pencil" {...p} />,
             Sparkles: (p) => <IconWrapper name="sparkles" {...p} />,
-            Calendar: (p) => <IconWrapper name="calendar" {...p} />
+            Calendar: (p) => <IconWrapper name="calendar" {...p} />,
+            Cross: (p) => <IconWrapper name="cross" {...p} />, // Using cross for christian
+            Brain: (p) => <IconWrapper name="brain" {...p} /> // Using brain for psychology
         };
 
         const STEPS = [ { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Icons.Moon }, { id: 1, title: '挖掘', subtitle: 'The Excavation', icon: Icons.Search }, { id: 2, title: '分辨', subtitle: 'The Discernment', icon: Icons.Scale }, { id: 3, title: '整合', subtitle: 'The Integration', icon: Icons.Feather } ];
         const MOOD_OPTIONS = [ { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/30 text-red-200 border-red-500/50' }, { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/30 text-orange-200 border-orange-500/50' }, { label: '驚訝/震撼', value: 'surprise', color: 'bg-lime-900/30 text-lime-200 border-lime-500/50' }, { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/30 text-yellow-200 border-yellow-500/50' }, { label: '平靜/安息', value: 'calm', color: 'bg-blue-900/30 text-blue-200 border-blue-500/50' }, { label: '愛/連結', value: 'love', color: 'bg-pink-900/30 text-pink-200 border-pink-500/50' }, { label: '憂鬱/思考', value: 'melancholy', color: 'bg-indigo-900/30 text-indigo-200 border-indigo-500/50' }, { label: '困惑/迷惘', value: 'confused', color: 'bg-purple-900/30 text-purple-200 border-purple-500/50' }, { label: '厭惡/排斥', value: 'disgust', color: 'bg-emerald-900/30 text-emerald-200 border-emerald-500/50' }, { label: '羞愧/定罪', value: 'shame', color: 'bg-slate-700/50 text-slate-300 border-slate-500/50' }, { label: '麻木/空虛', value: 'numb', color: 'bg-zinc-700/50 text-zinc-400 border-zinc-500/50' } ];
         const SYMBOL_TYPES = [ { label: '人物 (People)', value: 'PERSON' }, { label: '物品 (Objects)', value: 'OBJECT' }, { label: '地點 (Place)', value: 'PLACE' }, { label: '情節 (Events)', value: 'EVENT' } ];
-        const INITIAL_STATE = { id: '', date: new Date().toISOString().split('T')[0], title: '', narrative: '', moods: [], waking_mood: '', symbols: [], discernment: { somatic: '', theological_reflection: '' }, integration: { message_to_self: '', scripture: '', prayer_action: '' } };
+        const INITIAL_STATE = { 
+            id: '', date: new Date().toISOString().split('T')[0], title: '', narrative: '', moods: [], waking_mood: '', symbols: [], 
+            discernment: { somatic: '', theological_reflection: '' }, 
+            integration: { message_to_self: '', scripture: '', prayer_action: '' },
+            isChristianMode: true // Default mode
+        };
 
         const Label = ({ children, hint }) => (<label className="block text-slate-200 text-sm font-medium mb-2 tracking-wide font-serif print-text-dark drop-shadow-md">{children}{hint && <span className="block mt-1 text-xs text-slate-400 font-sans font-light leading-relaxed print-text-gray">{hint}</span>}</label>);
         const Input = ({ className = "", ...props }) => (<input className={`w-full rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:outline-none glass-input print-bg-white print-text-dark print-border ${className}`} {...props} />);
@@ -381,7 +388,12 @@
 
             const handleDateSelect = (dateStr, hasEntry) => {
                 if (hasEntry) { if (confirm(`載入 ${dateStr} 的夢境紀錄？`)) { setFormData(hasEntry); setShowSummary(true); } } 
-                else { if (confirm(`切換到 ${dateStr} 並開始新紀錄？(請先確認舊紀錄已儲存)`)) { setFormData({ ...INITIAL_STATE, id: crypto.randomUUID(), date: dateStr }); setCurrentStep(0); setShowSummary(false); } }
+                else { if (confirm(`切換到 ${dateStr} 並開始新紀錄？(請先確認舊紀錄已儲存)`)) { setFormData({ ...INITIAL_STATE, id: crypto.randomUUID(), date: dateStr, isChristianMode: formData.isChristianMode }); setCurrentStep(0); setShowSummary(false); } }
+            };
+
+            const selectMode = (isChristian) => {
+                setFormData(prev => ({ ...prev, isChristianMode: isChristian }));
+                setShowWelcome(false);
             };
 
             const renderSyncStatus = () => {
@@ -403,9 +415,34 @@
             );
 
             const renderStep2_Excavation = () => {
-                const getQuestions = (type) => { switch(type) { case 'PERSON': return { l1: '夢中人物是誰？', h1: '是認識的人還是陌生人？', l2: '榮格引導：內在投射', h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？', l3: '神學引導：關係與啟示', h3: '這個人物是否讓你聯想到聖經中的某個角色？' }; case 'OBJECT': return { l1: '出現了什麼顯眼的物品？', h1: '如：鑰匙、枯樹...', l2: '榮格引導：象徵功能', h2: '這個物品是用來做什麼的？它象徵資源還是阻礙？', l3: '神學引導：偶像 vs 恩賜', h3: '這讓你聯想到心中的金牛犢，還是手中的杖？' }; case 'PLACE': return { l1: '夢發生在哪裡？', h1: '如：老家、曠野...', l2: '榮格引導：心靈場景', h2: '這是熟悉的過去還是陌生的未來？', l3: '神學引導：屬靈季節', h3: '這像是「埃及」、「曠野」還是「迦南地」？' }; case 'EVENT': return { l1: '發生了什麼事？', h1: '如：被追趕、飛翔...', l2: '榮格引導：補償機制', h2: '如果夢是在平衡白天的態度，它在說什麼？', l3: '神學引導：試探 vs 試煉', h3: '這是恐懼的試探，還是信心的試煉？' }; default: return {}; } };
+                const getQuestions = (type) => {
+                    const isChristian = formData.isChristianMode;
+                    switch(type) {
+                        case 'PERSON': return { 
+                            l1: '夢中人物是誰？', h1: '是認識的人還是陌生人？', 
+                            l2: '榮格引導：內在投射', h2: '如果這個人是你人格的一部分，他代表了你的哪個特質？', 
+                            l3: isChristian ? '神學引導：關係與啟示' : null, h3: isChristian ? '這個人物是否讓你聯想到聖經中的某個角色？' : null 
+                        };
+                        case 'OBJECT': return { 
+                            l1: '出現了什麼顯眼的物品？', h1: '如：鑰匙、枯樹...', 
+                            l2: '榮格引導：象徵功能', h2: '這個物品是用來做什麼的？它象徵資源還是阻礙？', 
+                            l3: isChristian ? '神學引導：偶像 vs 恩賜' : null, h3: isChristian ? '這讓你聯想到心中的金牛犢，還是手中的杖？' : null 
+                        };
+                        case 'PLACE': return { 
+                            l1: '夢發生在哪裡？', h1: '如：老家、曠野...', 
+                            l2: '榮格引導：心靈場景', h2: '這是熟悉的過去還是陌生的未來？', 
+                            l3: isChristian ? '神學引導：屬靈季節' : null, h3: isChristian ? '這像是「埃及」、「曠野」還是「迦南地」？' : null 
+                        };
+                        case 'EVENT': return { 
+                            l1: '發生了什麼事？', h1: '如：被追趕、飛翔...', 
+                            l2: '榮格引導：補償機制', h2: '如果夢是在平衡白天的態度，它在說什麼？', 
+                            l3: isChristian ? '神學引導：試探 vs 試煉' : null, h3: isChristian ? '這是恐懼的試探，還是信心的試煉？' : null 
+                        };
+                        default: return {};
+                    }
+                };
                 const q = getQuestions(newSymbol.type);
-                return ( <div className="space-y-6 animate-fadeIn"><div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 mb-6 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 2: 拆解與聯想</h3><p className="text-slate-400 text-sm print-text-gray">利用「人事時地物」進行擴大聯想，挖掘個人與屬靈意義。</p></div><div className="space-y-4">{formData.symbols.map((symbol) => (<div key={symbol.id} className="glass-panel p-5 rounded-xl hover:border-amber-500/30 transition-colors group print-bg-white print-border print-text-dark"><div className="flex justify-between items-start mb-3"><div className="flex items-center gap-3"><span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-900/50 text-amber-400 border border-slate-600/50 print-bg-white print-text-dark print-border">{SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}</span><h4 className="font-bold text-slate-100 text-lg print-text-dark">{symbol.name}</h4></div><div className="flex gap-2 no-print"><button onClick={() => { setNewSymbol(symbol); setIsSymbolModalOpen(true); }} className="text-slate-500 hover:text-amber-400 p-1"><Icons.Pencil size={18} /></button><button onClick={() => removeSymbol(symbol.id)} className="text-slate-500 hover:text-red-400 p-1"><Icons.Trash2 size={18} /></button></div></div><div className="grid gap-3 text-sm text-slate-400 pl-3 border-l-2 border-slate-700/50 print-text-gray print-border"><p><span className="text-slate-500 print-text-dark font-medium">解析 1:</span> {symbol.q2}</p>{symbol.q3 && <p><span className="text-slate-500 print-text-dark font-medium">解析 2:</span> {symbol.q3}</p>}</div></div>))}<button onClick={() => { setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' }); setIsSymbolModalOpen(true); }} className="w-full py-8 border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-3 group no-print backdrop-blur-sm"><div className="p-3 bg-slate-800/50 rounded-full group-hover:bg-slate-700 transition-colors shadow-lg"><Icons.Plus size={24} /></div><span className="font-medium tracking-wide">點擊此處，挖掘夢中的關鍵元素</span></button></div>{isSymbolModalOpen && (<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm no-print"><div className="glass-panel rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar border-slate-600/50"><button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24} /></button><h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">{newSymbol.id ? <><Icons.Pencil size={20} /> 編輯元素</> : <><Icons.Search size={20} /> 挖掘元素</>}</h3><div className="space-y-6"><div><Label>這個元素的類型是？</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">{SYMBOL_TYPES.map(t => (<button key={t.value} onClick={() => setNewSymbol({ ...newSymbol, type: t.value })} className={`p-3 text-xs rounded-lg border transition-all ${newSymbol.type === t.value ? 'bg-amber-900/40 border-amber-500 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-slate-700 text-slate-400 hover:bg-slate-800/50'}`}>{t.label}</button>))}</div></div><div className="p-5 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-5"><div><Label hint={q.h1}>{q.l1}</Label><Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} /></div><div><Label hint={q.h2}>{q.l2}</Label><Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} /></div><div><Label hint={q.h3}>{q.l3}</Label><Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} /></div></div><div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={() => setIsSymbolModalOpen(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">取消</button><button onClick={handleSaveSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg">{newSymbol.id ? '更新儲存' : '確認新增'}</button></div></div></div></div>)}</div> );
+                return ( <div className="space-y-6 animate-fadeIn"><div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 mb-6 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 2: 拆解與聯想</h3><p className="text-slate-400 text-sm print-text-gray">利用「人事時地物」進行擴大聯想，挖掘個人與屬靈意義。</p></div><div className="space-y-4">{formData.symbols.map((symbol) => (<div key={symbol.id} className="glass-panel p-5 rounded-xl hover:border-amber-500/30 transition-colors group print-bg-white print-border print-text-dark"><div className="flex justify-between items-start mb-3"><div className="flex items-center gap-3"><span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-900/50 text-amber-400 border border-slate-600/50 print-bg-white print-text-dark print-border">{SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}</span><h4 className="font-bold text-slate-100 text-lg print-text-dark">{symbol.name}</h4></div><div className="flex gap-2 no-print"><button onClick={() => { setNewSymbol(symbol); setIsSymbolModalOpen(true); }} className="text-slate-500 hover:text-amber-400 p-1"><Icons.Pencil size={18} /></button><button onClick={() => removeSymbol(symbol.id)} className="text-slate-500 hover:text-red-400 p-1"><Icons.Trash2 size={18} /></button></div></div><div className="grid gap-3 text-sm text-slate-400 pl-3 border-l-2 border-slate-700/50 print-text-gray print-border"><p><span className="text-slate-500 print-text-dark font-medium">解析 1:</span> {symbol.q2}</p>{symbol.q3 && <p><span className="text-slate-500 print-text-dark font-medium">解析 2:</span> {symbol.q3}</p>}</div></div>))}<button onClick={() => { setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' }); setIsSymbolModalOpen(true); }} className="w-full py-8 border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-3 group no-print backdrop-blur-sm"><div className="p-3 bg-slate-800/50 rounded-full group-hover:bg-slate-700 transition-colors shadow-lg"><Icons.Plus size={24} /></div><span className="font-medium tracking-wide">點擊此處，挖掘夢中的關鍵元素</span></button></div>{isSymbolModalOpen && (<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm no-print"><div className="glass-panel rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar border-slate-600/50"><button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icons.X size={24} /></button><h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">{newSymbol.id ? <><Icons.Pencil size={20} /> 編輯元素</> : <><Icons.Search size={20} /> 挖掘元素</>}</h3><div className="space-y-6"><div><Label>這個元素的類型是？</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">{SYMBOL_TYPES.map(t => (<button key={t.value} onClick={() => setNewSymbol({ ...newSymbol, type: t.value })} className={`p-3 text-xs rounded-lg border transition-all ${newSymbol.type === t.value ? 'bg-amber-900/40 border-amber-500 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-slate-700 text-slate-400 hover:bg-slate-800/50'}`}>{t.label}</button>))}</div></div><div className="p-5 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-5"><div><Label hint={q.h1}>{q.l1}</Label><Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} /></div><div><Label hint={q.h2}>{q.l2}</Label><Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} /></div>{q.l3 && <div><Label hint={q.h3}>{q.l3}</Label><Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} /></div>}</div><div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={() => setIsSymbolModalOpen(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">取消</button><button onClick={handleSaveSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg">{newSymbol.id ? '更新儲存' : '確認新增'}</button></div></div></div></div>)}</div> );
             };
 
             const renderStep3_Discernment = () => (
@@ -413,7 +450,12 @@
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 3: 感受與分辨</h3><p className="text-slate-400 text-sm print-text-gray">連結情感中樞與屬靈聽力，分辨聲音的源頭。</p></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8"><div className="glass-panel p-6 rounded-xl print-bg-white print-border"><h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 print-text-dark"><Icons.Moon size={16} /> 夢中情緒</h4><div className="flex flex-wrap gap-2">{formData.moods.length > 0 ? formData.moods.map(m => (<span key={m} className="px-3 py-1 rounded-full bg-slate-800/50 text-slate-300 text-xs border border-slate-600/50 print-text-dark print-border">{MOOD_OPTIONS.find(opt => opt.value === m)?.label}</span>)) : <span className="text-slate-600 text-sm italic print-text-gray">未選擇</span>}</div></div><div><Label hint="夢裡的你感到恐懼，但醒來的你是否感到釋放？">醒後情緒 (Waking Emotion)</Label><Input placeholder="醒來後的第一個感覺是..." value={formData.waking_mood} onChange={(e) => updateField('waking_mood', e.target.value)}/></div></div>
                     <div><Label hint="記錄完這個夢，你的身體哪個部位有感覺？">身體感受 (Somatic Marker)</Label><Input placeholder="我的身體感覺..." value={formData.discernment.somatic} onChange={(e) => updateDiscernment('somatic', e.target.value)}/></div>
-                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 print-bg-white print-border backdrop-blur-sm"><Label hint="這個夢境帶給你的核心訊息，是讓你感到『定罪/羞愧』還是『悔改/盼望』？">屬靈分辨 (Theological Reflection)</Label><Textarea rows={5} className="bg-slate-900/50 border-purple-500/30 focus:border-purple-400/60 print-bg-white print-text-dark print-border" placeholder="我認為這個聲音來自..." value={formData.discernment.theological_reflection} onChange={(e) => updateDiscernment('theological_reflection', e.target.value)}/></div>
+                    <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 print-bg-white print-border backdrop-blur-sm">
+                        <Label hint={formData.isChristianMode ? "這個夢境帶給你的核心訊息，是讓你感到『定罪/羞愧』還是『悔改/盼望』？" : "這個夢境揭示了你內在的『自我批判』還是『成長動力』？"}>
+                            {formData.isChristianMode ? "屬靈分辨 (Theological Reflection)" : "內在分辨 (Inner Reflection)"}
+                        </Label>
+                        <Textarea rows={5} className="bg-slate-900/50 border-purple-500/30 focus:border-purple-400/60 print-bg-white print-text-dark print-border" placeholder="我認為這個聲音來自..." value={formData.discernment.theological_reflection} onChange={(e) => updateDiscernment('theological_reflection', e.target.value)}/>
+                    </div>
                 </div>
             );
 
@@ -422,8 +464,18 @@
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500 flex-shrink-0 print-bg-white print-border"><h3 className="text-amber-400 font-bold mb-1 print-text-dark text-lg">Phase 4: 行動與儀式</h3><p className="text-slate-400 text-sm print-text-gray">將潛意識的洞見帶入意識層面，產生轉化。</p></div>
                     <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
                         <div><Label hint="如果這個夢是『真實的自己』寫給『小我』的一封信，它想說的一句話是什麼？">給真實自己的信 (Message to Self)</Label><div className="relative"><Icons.Feather className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Textarea rows={3} className="pl-10 font-serif italic text-lg text-amber-100 print-bg-white print-text-dark print-border" placeholder="親愛的..." value={formData.integration.message_to_self} onChange={(e) => updateIntegration('message_to_self', e.target.value)}/></div></div>
-                        <div><Label hint="輸入關鍵字，或記錄下神讓你想起的一段經文。">聖經金句聯想 (Scriptural Connection)</Label><div className="relative"><Icons.Book className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Input className="pl-10 print-bg-white print-text-dark print-border" placeholder="例如：詩篇 23:4..." value={formData.integration.scripture} onChange={(e) => updateIntegration('scripture', e.target.value)}/></div></div>
-                        <div><Label hint="為了回應這個夢，你今天願意做一個小小的行動嗎？">禱告與行動 (Prayer & Action)</Label><Textarea rows={5} className="border-amber-500/30 focus:border-amber-500 print-bg-white print-text-dark print-border" placeholder="主啊，透過這個夢，我願意..." value={formData.integration.prayer_action} onChange={(e) => updateIntegration('prayer_action', e.target.value)}/></div>
+                        
+                        {formData.isChristianMode && (
+                            <div><Label hint="輸入關鍵字，或記錄下神讓你想起的一段經文。">聖經金句聯想 (Scriptural Connection)</Label><div className="relative"><Icons.Book className="absolute top-3 left-3 text-slate-500 no-print" size={18} /><Input className="pl-10 print-bg-white print-text-dark print-border" placeholder="例如：詩篇 23:4..." value={formData.integration.scripture} onChange={(e) => updateIntegration('scripture', e.target.value)}/></div></div>
+                        )}
+                        
+                        <div>
+                            <Label hint={formData.isChristianMode ? "為了回應這個夢，你今天願意做一個小小的行動嗎？" : "為了回應內在的聲音，你願意給自己什麼承諾？"}>
+                                {formData.isChristianMode ? "禱告與行動 (Prayer & Action)" : "行動與承諾 (Action & Commitment)"}
+                            </Label>
+                            <Textarea rows={5} className="border-amber-500/30 focus:border-amber-500 print-bg-white print-text-dark print-border" placeholder={formData.isChristianMode ? "主啊，透過這個夢，我願意..." : "我承諾自己..."} value={formData.integration.prayer_action} onChange={(e) => updateIntegration('prayer_action', e.target.value)}/>
+                        </div>
+                        
                         <div className="pt-4 border-t border-slate-700/50 flex justify-end no-print">
                             <button onClick={() => saveToHistory(formData)} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition-all"><Icons.Save size={18}/> 存入日記 (Save to History)</button>
                         </div>
@@ -445,7 +497,7 @@
                                 <section className="glass-panel p-6 rounded-xl print-bg-white print-border"><h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 print-text-gray">Discernment</h3><div className="space-y-4"><div><span className="text-slate-500 text-sm print-text-gray">夢中情緒：</span> <span className="text-slate-300 print-text-dark">{formData.moods.join(', ') || '-'}</span></div><div><span className="text-slate-500 text-sm print-text-gray">醒後情緒：</span> <span className="text-slate-300 print-text-dark">{formData.waking_mood || '-'}</span></div><div><span className="text-slate-500 text-sm print-text-gray">身體感受：</span> <span className="text-slate-300 print-text-dark">{formData.discernment.somatic || '-'}</span></div><div className="pt-2 border-t border-slate-700/50 print-border"><p className="text-purple-300 italic text-sm print-text-dark">{formData.discernment.theological_reflection || '尚無屬靈分辨紀錄'}</p></div></div></section>
                             </div>
                             <div className="space-y-6">
-                                <section className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20 print-bg-white print-border backdrop-blur-md"><h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-4 print-text-dark">Integration</h3><div className="space-y-6"><div><h4 className="font-serif text-xl text-slate-100 mb-2 print-text-dark">"{formData.integration.message_to_self || '...'}"</h4><p className="text-right text-xs text-slate-500 print-text-gray">— 給自己的信</p></div>{formData.integration.scripture && (<div className="flex items-start gap-2 text-slate-300 bg-slate-900/50 p-3 rounded print-bg-white print-text-dark"><Icons.Book size={16} className="mt-1 text-slate-500 print-text-gray"/><span>{formData.integration.scripture}</span></div>)}<div><h5 className="text-slate-400 text-xs font-bold mb-2 print-text-gray">PRAYER & ACTION</h5><p className="text-slate-300 italic print-text-dark">{formData.integration.prayer_action || '-'}</p></div></div></section>
+                                <section className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20 print-bg-white print-border backdrop-blur-md"><h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-4 print-text-dark">Integration</h3><div className="space-y-6"><div><h4 className="font-serif text-xl text-slate-100 mb-2 print-text-dark">"{formData.integration.message_to_self || '...'}"</h4><p className="text-right text-xs text-slate-500 print-text-gray">— 給自己的信</p></div>{formData.isChristianMode && formData.integration.scripture && (<div className="flex items-start gap-2 text-slate-300 bg-slate-900/50 p-3 rounded print-bg-white print-text-dark"><Icons.Book size={16} className="mt-1 text-slate-500 print-text-gray"/><span>{formData.integration.scripture}</span></div>)}<div><h5 className="text-slate-400 text-xs font-bold mb-2 print-text-gray">{formData.isChristianMode ? "PRAYER & ACTION" : "ACTION & COMMITMENT"}</h5><p className="text-slate-300 italic print-text-dark">{formData.integration.prayer_action || '-'}</p></div></div></section>
                                 <section><h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 print-text-gray">Excavation ({formData.symbols.length})</h3><div className="space-y-3">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-lg text-sm print-bg-white print-border print-text-dark"><div className="flex justify-between mb-2"><span className="font-bold text-amber-500 print-text-dark">{s.name}</span><span className="text-[10px] bg-slate-900/50 px-2 py-0.5 rounded text-slate-500 print-bg-white print-text-gray print-border">{s.type}</span></div><p className="text-slate-400 mb-1 print-text-dark">{s.q2}</p>{s.q3 && <p className="text-purple-400/80 italic print-text-gray">{s.q3}</p>}</div>))}</div></section>
                             </div>
                         </div>
@@ -453,6 +505,7 @@
                 </div>
             );
 
+            // --- Root Return ---
             return (
                 <>
                     <DreamBackground />
@@ -505,10 +558,23 @@
                                     <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(245,158,11,0.3)]"><Icons.Moon className="text-amber-400" size={32} /></div>
                                     <h2 className="text-2xl font-serif text-amber-100 tracking-wide drop-shadow-lg">歡迎來到靈魂之鏡：夢語聖所</h2>
                                     <blockquote className="text-slate-300 italic font-light leading-relaxed border-l-2 border-amber-500/50 pl-4 text-left">
-                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
+                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。」
                                         <footer className="mt-3 text-sm text-amber-400/80 not-italic">— 陪你穿越夢境的夥伴 Anne</footer>
                                     </blockquote>
-                                    <button onClick={() => setShowWelcome(false)} className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5">開始紀錄夢境</button>
+                                    
+                                    <div className="flex flex-col gap-3 mt-8">
+                                        <p className="text-sm text-slate-400 mb-2">請選擇您的探索旅程：</p>
+                                        <button onClick={() => selectMode(true)} className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02] border border-amber-500/30">
+                                            <Icons.Cross size={20} />
+                                            <span>信仰與心理整合路徑</span>
+                                            <span className="text-xs font-normal opacity-70 ml-1">(適合基督徒)</span>
+                                        </button>
+                                        <button onClick={() => selectMode(false)} className="w-full flex items-center justify-center gap-3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02] border border-slate-500/30">
+                                            <Icons.Brain size={20} />
+                                            <span>純心理學探索路徑</span>
+                                            <span className="text-xs font-normal opacity-70 ml-1">(榮格心理學)</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
