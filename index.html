@@ -29,7 +29,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         window.firebaseModules = { 
@@ -48,13 +48,10 @@
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         @keyframes twinkle { 0% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.3; transform: scale(0.8); } }
         
-        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
         .animate-slideUp { animation: slideUp 0.5s ease-out forwards; }
         
         .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
-        .glass-btn { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); transition: all 0.3s ease; }
-        .glass-btn:hover { background: rgba(30, 41, 59, 0.7); border-color: rgba(245, 158, 11, 0.5); transform: translateY(-2px); }
-        
         .glass-input { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); transition: all 0.3s ease; width: 100%; color: #f1f5f9; border-radius: 0.5rem; padding: 0.75rem; }
         .glass-input:focus { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.1); outline: none; }
 
@@ -116,7 +113,7 @@
             { label: '物品 (Objects)', value: 'OBJECT' }, 
             { label: '地點 (Place)', value: 'PLACE' }, 
             { label: '情節 (Events)', value: 'EVENT' },
-            { label: '時間 (Time)', value: 'TIME' } // Added Time
+            { label: '時間 (Time)', value: 'TIME' } 
         ];
 
         const STEPS_CONFIG = [ 
@@ -568,11 +565,11 @@
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 3: 分辨與感受</h3></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div><Label>醒後情緒</Label><input className="glass-input" value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div>
-                        <div><Label>身體感受</Label><input className="glass-input" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div>
+                        <div><Label>醒後情緒</Label><input className="glass-input" placeholder="醒來第一個感覺..." value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div>
+                        <div><Label>身體感受</Label><input className="glass-input" placeholder="身體反應在哪？" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div>
                     </div>
                     <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 backdrop-blur-sm">
-                        <Label hint={formData.isChristianMode ? "來自控告還是聖靈？" : "自我批判還是成長動力？"}>{formData.isChristianMode ? "屬靈分辨" : "內在分辨"}</Label>
+                        <Label hint={formData.isChristianMode ? "這是來自『控告』還是『聖靈』？" : "這是來自『內在批判』還是『成長動力』？"}>{formData.isChristianMode ? "屬靈分辨 (Theological Reflection)" : "內在分辨 (Inner Reflection)"}</Label>
                         <textarea className="glass-input" rows={5} value={formData.discernment.theological_reflection} onChange={e=>updateDiscernment('theological_reflection', e.target.value)} />
                     </div>
                 </div>
@@ -584,8 +581,8 @@
                     <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
                         <div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>
                         {formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}
-                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
-                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
+                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
+                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
                     </div>
                 </div>
             );
@@ -633,7 +630,7 @@
                                 <div className="flex items-center gap-3">
                                     {syncStatus === 'synced' && <div className="px-3 py-1 rounded-full border border-blue-500/30 text-xs text-blue-400 flex items-center gap-1 bg-blue-500/10"><Icons.Cloud size={14} /> 雲端連線</div>}
                                     {user && !user.isAnonymous ? (
-                                        <div className="flex items-center gap-2 glass-panel px-3 py-1 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-600" alt="Avatar" /><button onClick={logout} className="text-[10px]">登出</button></div>
+                                        <div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-full"><img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-600" alt="Avatar" /><button onClick={logout} className="text-[10px]">登出</button></div>
                                     ) : (
                                         <button onClick={loginGoogle} className="bg-white/90 text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold active:scale-95 transition-all shadow-lg flex items-center gap-1"><Icons.LogIn size={14}/> Google 登入</button>
                                     )}
@@ -662,7 +659,7 @@
                                     <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"><Icons.Moon className="text-amber-400" size={32} /></div>
                                     <h2 className="text-2xl font-serif text-amber-100 mb-6 drop-shadow-md">歡迎來到靈魂之鏡</h2>
                                     <blockquote className="text-slate-300 italic mb-10 border-l-2 border-amber-500/50 pl-4 text-left leading-relaxed">
-                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
+                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與夢中的意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
                                         <footer className="mt-2 text-sm text-amber-400/80 text-right">— 陪你穿越夢境的夥伴 Anne</footer>
                                     </blockquote>
                                     <div className="flex flex-col gap-4">
