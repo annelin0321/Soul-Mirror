@@ -161,8 +161,6 @@
 
                 // 2. Moon Icon (Centered)
                 ctx.fillStyle = 'white';
-                // Lucide Moon Path: M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z
-                // Scale calculations: 24px grid -> 512px canvas. Scale ~15x.
                 
                 ctx.save();
                 ctx.translate(256, 256); // Center
@@ -408,6 +406,7 @@
         const Printer = (props) => <IconWrapper name="printer" {...props} />;
         const Mic = (props) => <IconWrapper name="mic" {...props} />;
         const MicOff = (props) => <IconWrapper name="mic-off" {...props} />;
+        const Pencil = (props) => <IconWrapper name="pencil" {...props} />;
 
         const STEPS = [
             { id: 0, title: '捕捉', subtitle: 'The Capture', icon: Moon },
@@ -545,9 +544,23 @@
                 });
             };
 
-            const handleAddSymbol = () => {
+            const handleSaveSymbol = () => {
                 if (!newSymbol.name) return;
-                setFormData(prev => ({ ...prev, symbols: [...prev.symbols, { ...newSymbol, id: Date.now() }] }));
+
+                if (newSymbol.id) {
+                    // Update
+                    setFormData(prev => ({
+                        ...prev,
+                        symbols: prev.symbols.map(s => s.id === newSymbol.id ? newSymbol : s)
+                    }));
+                } else {
+                    // Add
+                    setFormData(prev => ({
+                        ...prev,
+                        symbols: [...prev.symbols, { ...newSymbol, id: Date.now() }]
+                    }));
+                }
+                
                 setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
                 setIsSymbolModalOpen(false);
             };
@@ -694,21 +707,54 @@
                         <div className="space-y-4">
                             {formData.symbols.map((symbol) => (
                                 <div key={symbol.id} className="glass-panel p-5 rounded-xl hover:border-amber-500/30 transition-colors group print-bg-white print-border print-text-dark">
-                                    <div className="flex justify-between items-start mb-3"><div className="flex items-center gap-3"><span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-900/50 text-amber-400 border border-slate-600/50 print-bg-white print-text-dark print-border">{SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}</span><h4 className="font-bold text-slate-100 text-lg print-text-dark">{symbol.name}</h4></div><button onClick={() => removeSymbol(symbol.id)} className="text-slate-500 hover:text-red-400 transition-colors no-print p-1"><Trash2 size={18} /></button></div>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-900/50 text-amber-400 border border-slate-600/50 print-bg-white print-text-dark print-border">{SYMBOL_TYPES.find(t => t.value === symbol.type)?.label.split(' ')[0]}</span>
+                                            <h4 className="font-bold text-slate-100 text-lg print-text-dark">{symbol.name}</h4>
+                                        </div>
+                                        <div className="flex gap-2 no-print">
+                                            <button 
+                                                onClick={() => {
+                                                    setNewSymbol(symbol);
+                                                    setIsSymbolModalOpen(true);
+                                                }}
+                                                className="text-slate-500 hover:text-amber-400 transition-colors p-1"
+                                                title="編輯"
+                                            >
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button onClick={() => removeSymbol(symbol.id)} className="text-slate-500 hover:text-red-400 transition-colors p-1" title="刪除"><Trash2 size={18} /></button>
+                                        </div>
+                                    </div>
                                     <div className="grid gap-3 text-sm text-slate-400 pl-3 border-l-2 border-slate-700/50 print-text-gray print-border"><p><span className="text-slate-500 print-text-dark font-medium">解析 1:</span> {symbol.q2}</p>{symbol.q3 && <p><span className="text-slate-500 print-text-dark font-medium">解析 2:</span> {symbol.q3}</p>}</div>
                                 </div>
                             ))}
-                            <button onClick={() => setIsSymbolModalOpen(true)} className="w-full py-8 border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-3 group no-print backdrop-blur-sm"><div className="p-3 bg-slate-800/50 rounded-full group-hover:bg-slate-700 transition-colors shadow-lg"><Plus size={24} /></div><span className="font-medium tracking-wide">點擊此處，挖掘夢中的關鍵元素</span></button>
+                            <button 
+                                onClick={() => {
+                                    setNewSymbol({ id: null, name: '', type: 'PERSON', q1: '', q2: '', q3: '' });
+                                    setIsSymbolModalOpen(true);
+                                }}
+                                className="w-full py-8 border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500 hover:border-amber-500/50 hover:text-amber-400 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-3 group no-print backdrop-blur-sm"
+                            >
+                                <div className="p-3 bg-slate-800/50 rounded-full group-hover:bg-slate-700 transition-colors shadow-lg"><Plus size={24} /></div><span className="font-medium tracking-wide">點擊此處，挖掘夢中的關鍵元素</span>
+                            </button>
                         </div>
                         {isSymbolModalOpen && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm no-print">
                                 <div className="glass-panel rounded-xl w-full max-w-2xl shadow-2xl p-6 relative animate-slideUp max-h-[90vh] overflow-y-auto custom-scrollbar border-slate-600/50">
                                     <button onClick={() => setIsSymbolModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><X size={24} /></button>
-                                    <h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2"><Search size={20} /> 挖掘元素</h3>
+                                    <h3 className="text-xl font-serif text-amber-500 mb-6 flex items-center gap-2">
+                                        {newSymbol.id ? <><Pencil size={20} /> 編輯元素</> : <><Search size={20} /> 挖掘元素</>}
+                                    </h3>
                                     <div className="space-y-6">
                                         <div><Label>這個元素的類型是？</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">{SYMBOL_TYPES.map(t => (<button key={t.value} onClick={() => setNewSymbol({ ...newSymbol, type: t.value })} className={`p-3 text-xs rounded-lg border transition-all ${newSymbol.type === t.value ? 'bg-amber-900/40 border-amber-500 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-slate-700 text-slate-400 hover:bg-slate-800/50'}`}>{t.label}</button>))}</div></div>
                                         <div className="p-5 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-5"><div><Label hint={q.h1}>{q.l1}</Label><Input value={newSymbol.name} onChange={e => setNewSymbol({...newSymbol, name: e.target.value})} /></div><div><Label hint={q.h2}>{q.l2}</Label><Textarea rows={3} value={newSymbol.q2} onChange={e => setNewSymbol({...newSymbol, q2: e.target.value})} /></div><div><Label hint={q.h3}>{q.l3}</Label><Textarea rows={3} className="border-purple-900/30 focus:border-purple-500/50" value={newSymbol.q3} onChange={e => setNewSymbol({...newSymbol, q3: e.target.value})} /></div></div>
-                                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50"><button onClick={() => setIsSymbolModalOpen(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">取消</button><button onClick={handleAddSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg">確認新增</button></div>
+                                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+                                            <button onClick={() => setIsSymbolModalOpen(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">取消</button>
+                                            <button onClick={handleSaveSymbol} disabled={!newSymbol.name} className="bg-amber-600 hover:bg-amber-500 text-slate-900 px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg">
+                                                {newSymbol.id ? '更新儲存' : '確認新增'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
