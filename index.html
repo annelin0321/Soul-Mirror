@@ -78,6 +78,7 @@
         // 1. 全域常數與設定
         // ==========================================
         
+        // 使用您的舊金鑰 (驗證通過但網域被擋)
         const MANUAL_FIREBASE_CONFIG = { 
             apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I", 
             authDomain: "soul-mirror-999e5.firebaseapp.com", 
@@ -201,7 +202,7 @@
                 <div className="w-full mb-8 relative z-10 px-2">
                     <div className="flex justify-between">
                         {STEPS_CONFIG.map((step, idx) => {
-                            const IconC = Icons[step.icon] || Icons.Moon;
+                            const IconC = Icons[step.icon];
                             const isActive = idx === currentStep;
                             return (
                                 <button key={idx} onClick={() => onStepClick(idx)} className={`flex flex-col items-center w-1/4 transition-all duration-300 ${isActive ? 'opacity-100 scale-105' : 'opacity-40 hover:opacity-100'}`}>
@@ -218,6 +219,14 @@
 
         function DiagnosisModal({ info, onClose }) {
             if (!info.message) return null;
+            
+            const handleCopy = () => {
+                if (info.domain) {
+                    navigator.clipboard.writeText(info.domain);
+                    alert("網域已複製！請至 Firebase Console 新增。");
+                }
+            };
+
             return (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
                     <div className="glass-panel p-8 rounded-2xl max-w-lg w-full text-center border-slate-700 shadow-2xl relative">
@@ -225,10 +234,17 @@
                             {info.type === 'error' ? <Icons.AlertTriangle size={32} /> : <Icons.Check size={32} />}
                         </div>
                         <h4 className="text-2xl font-bold mb-4">{info.title || '系統訊息'}</h4>
-                        <div className="bg-black/40 p-4 rounded-xl text-left text-sm text-slate-300 font-mono break-all mb-8 whitespace-pre-line border border-white/5 select-text">
+                        <div className="bg-black/40 p-4 rounded-xl text-left text-sm text-slate-300 font-mono break-all mb-6 whitespace-pre-line border border-white/5 select-text">
                             {info.message}
                         </div>
-                        <button onClick={onClose} className="w-full bg-slate-100 text-slate-900 hover:bg-white py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">關閉</button>
+                        
+                        {info.domain && (
+                            <button onClick={handleCopy} className="mb-4 w-full bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-500/50 py-2 rounded-lg font-bold transition-all text-xs flex items-center justify-center gap-2">
+                                <Icons.Cloud size={14} /> 點此複製網域：{info.domain}
+                            </button>
+                        )}
+
+                        <button onClick={onClose} className="w-full bg-slate-100 text-slate-900 hover:bg-white py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">了解並關閉</button>
                     </div>
                 </div>
             );
@@ -273,7 +289,7 @@
             const [user, setUser] = useState(null);
             const [syncStatus, setSyncStatus] = useState('offline');
             const [history, setHistory] = useState({});
-            const [diagnosis, setDiagnosis] = useState({ title: '', message: '', type: '' });
+            const [diagnosis, setDiagnosis] = useState({ title: '', message: '', type: '', domain: '' });
             const [newSymbol, setNewSymbol] = useState({ id: null, name: '', type: 'PERSON', q2: '', q3: '' });
 
             const dbRef = useRef(null);
@@ -348,21 +364,16 @@
                     setDiagnosis({ title: '登入成功', message: `歡迎使用雲端同步功能，${result.user.displayName}`, type: 'success' });
                 } catch (e) { 
                     const currentDomain = window.location.hostname;
-                    let customMsg = `錯誤代碼: ${e.code}\n\n`;
-                    
+                    let info = { title: 'Google 登入失敗', type: 'error', message: e.message, domain: '' };
+
                     if (e.code === 'auth/unauthorized-domain') {
-                        customMsg += `請將以下網域加入 Firebase 的「授權網域」清單中：\n👉 ${currentDomain}\n\n(位置：Firebase Console > Authentication > Settings > Authorized domains)`;
+                        info.message = `錯誤代碼: ${e.code}\n\nFirebase 尚未授權此預覽網域。請點擊下方按鈕複製網域，並加入 Firebase 白名單。`;
+                        info.domain = currentDomain;
                     } else if (e.code === 'auth/configuration-not-found') {
-                         customMsg += `請至 Google Cloud Console 檢查 API 金鑰限制，確保已勾選 Identity Toolkit API。`;
-                    } else {
-                        customMsg += e.message;
+                        info.message = `錯誤代碼: ${e.code}\n\n請至 Google Cloud Console 檢查 API 金鑰限制，確保已勾選 Identity Toolkit API。`;
                     }
                     
-                    setDiagnosis({ 
-                        title: 'Google 登入失敗', 
-                        message: customMsg, 
-                        type: 'error' 
-                    }); 
+                    setDiagnosis(info); 
                 }
             };
 
