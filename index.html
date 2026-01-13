@@ -59,52 +59,12 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 10px; }
 
-        /* --- 🖨️ PRINT STYLES --- */
         @media print {
-            body {
-                background-color: white !important;
-                background-image: none !important;
-                color: black !important;
-                overflow: visible !important;
-                height: auto !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .print-hidden { display: none !important; }
-            .no-print, header, footer, button, .fixed, .bg-decoration { display: none !important; }
-
-            #summary-view {
-                display: block !important;
-                position: static !important;
-                overflow: visible !important;
-                height: auto !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: white !important;
-                inset: auto !important;
-                transform: none !important;
-                z-index: 9999 !important;
-            }
-
-            #summary-view .max-w-4xl { max-width: 100% !important; padding: 0 20px !important; margin: 0 !important; }
-            #summary-view * { visibility: visible !important; color: black !important; }
-
-            .glass-panel {
-                background: white !important;
-                border: 1px solid #ccc !important;
-                border-radius: 8px !important;
-                margin-bottom: 20px !important;
-                padding: 15px !important;
-                page-break-inside: avoid;
-            }
-            
-            .text-amber-500, .text-amber-400, .text-amber-100 { color: #000 !important; font-weight: bold !important; }
-            .text-slate-500, .text-slate-400, .text-slate-300 { color: #333 !important; }
-            .text-purple-300, .text-purple-400 { color: #444 !important; font-style: italic; }
-
-            .grid { display: block !important; }
-            .md\:grid-cols-2 { display: block !important; }
+            body * { visibility: hidden; }
+            #summary-view, #summary-view * { visibility: visible; }
+            body, #summary-view { background-color: white !important; color: black !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; overflow: visible !important; }
+            .no-print { display: none !important; }
+            .glass-panel { background: white !important; border: 1px solid #ddd !important; box-shadow: none !important; backdrop-filter: none !important; }
         }
     </style>
 </head>
@@ -119,7 +79,7 @@
         // ==========================================
         
         const MANUAL_FIREBASE_CONFIG = { 
-            apiKey: "AIzaSyA2qRVwY01QW-Ju5q-0V8B9sHtxDYLhF1I", 
+            apiKey: "AIzaSyAgc3maS_-9iEvvbvo4ozIaHCCFrGxaLDQ", 
             authDomain: "soul-mirror-999e5.firebaseapp.com", 
             projectId: "soul-mirror-999e5", 
             storageBucket: "soul-mirror-999e5.firebasestorage.app", 
@@ -271,7 +231,7 @@
                             請耐心等待，不要急著關閉...
                         </p>
                         <p className="text-slate-500 text-xs animate-pulse">
-                            ( 依據內容長度，可能需要 30 秒左右 )
+                            ( 系統正在優化排版中 )
                         </p>
                     </div>
                     <button onClick={onClose} className="px-4 py-2 border border-slate-600 rounded text-slate-400 hover:text-white text-sm transition-colors">取消 / 關閉等待視窗</button>
@@ -414,8 +374,7 @@
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SR) return;
                 const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'zh-TW';
-                r.onstart = () => setIsListening(true);
-                r.onend = () => setIsListening(false);
+                r.onstart = () => setIsListening(true); r.onend = () => setIsListening(false);
                 r.onresult = (e) => {
                     let f = ''; for(let i=e.resultIndex; i<e.results.length; ++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript;
                     if(f) setFormData(p => ({ ...p, narrative: (p.narrative || '') + f }));
@@ -517,12 +476,46 @@
 
             const handlePrint = () => {
                 setIsPrinting(true);
-                // Optimized delay: give DOM time to repaint, then print
+                // Create an iframe to print
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.width = '0px';
+                iframe.style.height = '0px';
+                iframe.style.border = 'none';
+                document.body.appendChild(iframe);
+
+                const content = document.getElementById('summary-view').innerHTML;
+                const doc = iframe.contentWindow.document;
+                
+                doc.open();
+                doc.write('<html><head><title>夢境紀錄</title>');
+                // Split script tag to avoid parser error
+                doc.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+                doc.write('<style>');
+                doc.write(`
+                    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+                    body { font-family: 'Noto Sans TC', sans-serif; padding: 20px; }
+                    .font-serif { font-family: 'Noto Serif TC', serif; }
+                    .glass-panel { border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+                    .text-slate-500 { color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
+                    .text-slate-200, .text-slate-300 { color: #000; line-height: 1.6; }
+                    .text-amber-500 { color: #000; font-size: 1.5rem; font-family: 'Noto Serif TC', serif; margin-bottom: 5px; font-weight: bold; }
+                    .text-purple-300, .text-purple-400 { color: #444; font-style: italic; margin-top: 5px; display: block; }
+                    .no-print, button { display: none !important; }
+                `);
+                doc.write('</style></head><body>');
+                doc.write(content);
+                doc.write('</body></html>');
+                doc.close();
+
+                // Wait for Tailwind to parse and apply
                 setTimeout(() => {
-                    window.print();
-                    // Add listener to remove overlay after print dialog closes
-                    window.addEventListener('afterprint', () => setIsPrinting(false), { once: true });
-                }, 800);
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    // Cleanup
+                    document.body.removeChild(iframe);
+                    setIsPrinting(false);
+                }, 1500); 
             };
 
             // --- Render Logic ---
@@ -640,34 +633,7 @@
                         <div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>
                         {formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}
                         <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
-                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
-                    </div>
-                </div>
-            );
-
-            const renderSummaryView = () => (
-                <div id="summary-view" className="fixed inset-0 z-50 bg-[#0f172a]/98 backdrop-blur-xl overflow-y-auto p-8 animate-fadeIn">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="flex justify-between items-center mb-8 border-b border-slate-700/50 pb-4">
-                            <div><h2 className="text-3xl text-amber-500 font-serif">夢境紀錄卡</h2><p className="text-slate-500">{formData.date} | {formData.title}</p></div>
-                            <div className="flex gap-3 no-print">
-                                <button onClick={handleEditFromSummary} className="text-slate-400 hover:text-white px-4 py-2 font-medium">返回編輯</button>
-                                <button onClick={() => window.print()} className="bg-amber-600 text-slate-900 px-5 py-2 rounded-lg font-bold shadow-lg flex items-center gap-1"><Icons.Printer size={18} /> 列印 / 另存 PDF</button>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <section className="glass-panel p-6 rounded-xl space-y-4">
-                                <h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest">夢境敘事</h3>
-                                <p className="text-slate-200 whitespace-pre-wrap leading-relaxed font-serif text-lg">{formData.narrative || "尚無紀錄"}</p>
-                            </section>
-                            <section className="space-y-6">
-                                <div className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20">
-                                    <h3 className="text-amber-500 text-xs font-bold mb-4 uppercase">整合啟示</h3>
-                                    <p className="font-serif text-xl italic text-slate-100">"{formData.integration.message_to_self || '...'}"</p>
-                                </div>
-                                <div className="space-y-3">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-lg text-sm border border-white/5"><span className="text-amber-500 font-bold">{s.name}</span>: {s.q2}</div>))}</div>
-                            </section>
-                        </div>
+                        <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
                     </div>
                 </div>
             );
