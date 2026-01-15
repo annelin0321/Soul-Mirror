@@ -61,16 +61,48 @@
 
         /* --- 🖨️ PRINT STYLES --- */
         @media print {
-            body { background-color: white !important; background-image: none !important; color: black !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+            body {
+                background-color: white !important;
+                background-image: none !important;
+                color: black !important;
+                overflow: visible !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
             .print-hidden { display: none !important; }
             .no-print, header, footer, button, .fixed, .bg-decoration { display: none !important; }
-            #summary-view { display: block !important; position: static !important; overflow: visible !important; height: auto !important; width: 100% !important; margin: 0 !important; padding: 0 !important; background: white !important; inset: auto !important; transform: none !important; z-index: 9999 !important; }
+
+            #summary-view {
+                display: block !important;
+                position: static !important;
+                overflow: visible !important;
+                height: auto !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                inset: auto !important;
+                transform: none !important;
+                z-index: 9999 !important;
+            }
+
             #summary-view .max-w-4xl { max-width: 100% !important; padding: 0 20px !important; margin: 0 !important; }
             #summary-view * { visibility: visible !important; color: black !important; }
-            .glass-panel { background: white !important; border: 1px solid #ccc !important; border-radius: 8px !important; margin-bottom: 20px !important; padding: 15px !important; page-break-inside: avoid; }
+
+            .glass-panel {
+                background: white !important;
+                border: 1px solid #ccc !important;
+                border-radius: 8px !important;
+                margin-bottom: 20px !important;
+                padding: 15px !important;
+                page-break-inside: avoid;
+            }
+            
             .text-amber-500, .text-amber-400, .text-amber-100 { color: #000 !important; font-weight: bold !important; }
             .text-slate-500, .text-slate-400, .text-slate-300 { color: #333 !important; }
             .text-purple-300, .text-purple-400 { color: #444 !important; font-style: italic; }
+
             .grid { display: block !important; }
             .md\:grid-cols-2 { display: block !important; }
         }
@@ -98,7 +130,7 @@
         const INITIAL_STATE = { 
             id: '', date: new Date().toISOString().split('T')[0], title: '', narrative: '', moods: [], waking_mood: '', symbols: [], 
             discernment: { somatic: '', theological_reflection: '' }, 
-            integration: { message_to_self: '', scripture: '', prayer_action: '' },
+            integration: { retelling: '', message_to_self: '', scripture: '', prayer_action: '' }, // Added retelling
             isChristianMode: true
         };
 
@@ -179,7 +211,8 @@
             Calendar: (p) => <IconWrapper name="calendar" {...p} />,
             Cross: (p) => <IconWrapper name="cross" {...p} />,
             Brain: (p) => <IconWrapper name="brain" {...p} />,
-            ArrowLeft: (p) => <IconWrapper name="arrow-left" {...p} />
+            ArrowLeft: (p) => <IconWrapper name="arrow-left" {...p} />,
+            RefreshCw: (p) => <IconWrapper name="refresh-cw" {...p} /> // New icon for Retelling
         };
 
         function Label({ children, hint }) {
@@ -426,8 +459,7 @@
             };
 
             const handleDateSelect = (dateStr, entry) => { 
-                if (entry) {
-                    // 安全載入資料，避免舊資料欄位缺失導致崩潰
+                if (entry) { 
                     setFormData({
                         ...INITIAL_STATE,
                         ...entry,
@@ -599,8 +631,8 @@
                 <div className="space-y-8 animate-fadeIn">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 3: 分辨與感受</h3></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div><Label>醒後情緒</Label><input className="glass-input" placeholder="醒來第一個感覺..." value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div>
-                        <div><Label>身體感受</Label><input className="glass-input" placeholder="身體反應在哪？" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div>
+                        <div><Label>醒後情緒</Label><input className="glass-input" value={formData.waking_mood} onChange={e=>updateField('waking_mood', e.target.value)} /></div>
+                        <div><Label>身體感受</Label><input className="glass-input" value={formData.discernment.somatic} onChange={e=>updateDiscernment('somatic', e.target.value)} /></div>
                     </div>
                     <div className="bg-purple-900/10 p-6 rounded-xl border border-purple-500/20 backdrop-blur-sm">
                         <Label hint={formData.isChristianMode ? "這是來自『控告』還是『聖靈』？" : "這是來自『內在批判』還是『成長動力』？"}>{formData.isChristianMode ? "屬靈分辨" : "內在分辨"}</Label>
@@ -613,9 +645,18 @@
                 <div className="space-y-8 animate-fadeIn h-full flex flex-col">
                     <div className="glass-panel p-5 rounded-xl border-l-4 border-amber-500"><h3 className="text-amber-400 font-bold mb-1 text-lg">Phase 4: 整合與承諾</h3></div>
                     <div className="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
+                        {/* New Retelling Section */}
+                        <div className="bg-gradient-to-br from-amber-900/20 to-purple-900/10 p-5 rounded-xl border border-amber-500/20">
+                             <div className="flex gap-2 items-center mb-2">
+                                <Icons.RefreshCw size={18} className="text-amber-400"/>
+                                <Label hint="用剛剛挖掘的意義，重新說一次這個夢。例如：『車子拋錨』變成『我的生命動力暫停了』。">以新視角重述 (Retelling)</Label>
+                            </div>
+                            <textarea className="glass-input font-serif text-amber-100/90" rows={4} placeholder="重述你的夢境故事..." value={formData.integration.retelling} onChange={e=>updateIntegration('retelling', e.target.value)} />
+                        </div>
+                        
                         <div><Label>給真實自己的信</Label><textarea className="glass-input italic font-serif" rows={3} value={formData.integration.message_to_self} onChange={e=>updateIntegration('message_to_self', e.target.value)} /></div>
                         {formData.isChristianMode && (<div><Label>經文聯想</Label><input className="glass-input" value={formData.integration.scripture} onChange={e=>updateIntegration('scripture', e.target.value)} /></div>)}
-                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} placeholder={formData.isChristianMode ? "主啊..." : "我承諾..."} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
+                        <div><Label>{formData.isChristianMode ? "禱告與行動" : "承諾與行動"}</Label><textarea className="glass-input" rows={5} value={formData.integration.prayer_action} onChange={e=>updateIntegration('prayer_action', e.target.value)} /></div>
                         <div className="flex justify-end pt-4 border-t border-slate-700/50"><button onClick={()=>saveToHistory(formData)} className="bg-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg flex gap-2 items-center hover:scale-105 transition-all"><Icons.Save size={18}/> 存入日記</button></div>
                     </div>
                 </div>
@@ -639,6 +680,12 @@
                             <section className="space-y-6">
                                 <div className="bg-gradient-to-br from-amber-900/20 to-purple-900/20 p-6 rounded-xl border border-amber-500/20">
                                     <h3 className="text-amber-500 text-xs font-bold mb-4 uppercase">整合啟示</h3>
+                                    {formData.integration.retelling && (
+                                        <div className="mb-6 p-4 bg-black/20 rounded-lg border-l-2 border-amber-500">
+                                            <h4 className="text-amber-400 text-xs font-bold mb-2">新視角重述</h4>
+                                            <p className="text-slate-200 italic font-serif">{formData.integration.retelling}</p>
+                                        </div>
+                                    )}
                                     <p className="font-serif text-xl italic text-slate-100">"{formData.integration.message_to_self || '...'}"</p>
                                 </div>
                                 <div className="space-y-3">{formData.symbols.map(s => (<div key={s.id} className="glass-panel p-4 rounded-lg text-sm border border-white/5"><span className="text-amber-500 font-bold">{s.name}</span>: {s.q2}</div>))}</div>
@@ -692,7 +739,7 @@
                                     <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"><Icons.Moon className="text-amber-400" size={32} /></div>
                                     <h2 className="text-2xl font-serif text-amber-100 mb-6 drop-shadow-md">歡迎來到靈魂之鏡</h2>
                                     <blockquote className="text-slate-300 italic mb-10 border-l-2 border-amber-500/50 pl-4 text-left leading-relaxed">
-                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著尋找答案，試著與意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
+                                        「夢不是要告訴你未來會發生什麼，而是告訴你現在你是誰。請不要急著找答案，試著與意象共處。在榮格眼中，這叫『孵夢』；在神學眼中，這是『等候神』。」
                                         <footer className="mt-2 text-sm text-amber-400/80 text-right">— 陪你穿越夢境的夥伴 Anne</footer>
                                     </blockquote>
                                     <div className="flex flex-col gap-4">
