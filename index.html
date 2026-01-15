@@ -127,16 +127,26 @@
             appId: "1:978882078040:web:8110f9b28158668fecb12d" 
         };
 
+        // Helper: Get local date string YYYY-MM-DD
+        const getLocalDateString = (dateObj = new Date()) => {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
         const INITIAL_STATE = { 
-            id: '', date: new Date().toISOString().split('T')[0], title: '', narrative: '', moods: [], waking_mood: '', symbols: [], 
+            id: '', 
+            date: getLocalDateString(), // Fixed: use local date
+            title: '', narrative: '', moods: [], waking_mood: '', symbols: [], 
             discernment: { somatic: '', theological_reflection: '' }, 
-            integration: { retelling: '', message_to_self: '', scripture: '', prayer_action: '' }, // Added retelling
+            integration: { retelling: '', message_to_self: '', scripture: '', prayer_action: '' },
             isChristianMode: true
         };
 
         const MOOD_OPTIONS = [ 
             { label: '焦慮/恐懼', value: 'anxious', color: 'bg-red-900/30 text-red-200 border-red-500/50' }, 
-            { label: '壓力/重擔', value: 'stressed', color: 'bg-stone-800/50 text-stone-200 border-stone-500/50' }, // Added
+            { label: '壓力/重擔', value: 'stressed', color: 'bg-stone-800/50 text-stone-200 border-stone-500/50' },
             { label: '憤怒/熱情', value: 'anger', color: 'bg-orange-900/30 text-orange-200 border-orange-500/50' }, 
             { label: '驚訝/震撼', value: 'surprise', color: 'bg-lime-900/30 text-lime-200 border-lime-500/50' }, 
             { label: '興奮/喜樂', value: 'excited', color: 'bg-yellow-900/30 text-yellow-200 border-yellow-500/50' }, 
@@ -213,7 +223,7 @@
             Cross: (p) => <IconWrapper name="cross" {...p} />,
             Brain: (p) => <IconWrapper name="brain" {...p} />,
             ArrowLeft: (p) => <IconWrapper name="arrow-left" {...p} />,
-            RefreshCw: (p) => <IconWrapper name="refresh-cw" {...p} /> // New icon for Retelling
+            RefreshCw: (p) => <IconWrapper name="refresh-cw" {...p} />
         };
 
         function Label({ children, hint }) {
@@ -320,7 +330,15 @@
             const year = currentDate.getFullYear(); const month = currentDate.getMonth();
             const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
             const days = []; for (let i = 0; i < firstDay; i++) days.push(null); for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
-            const formatDate = (d) => d.toISOString().split('T')[0];
+            
+            // Fixed: use local date string logic
+            const formatDate = (d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-fadeIn" onClick={onClose}>
                     <div className="glass-panel w-full max-w-md p-6 rounded-2xl" onClick={e => e.stopPropagation()}>
@@ -452,7 +470,7 @@
             };
 
             const handleStartNewDream = () => {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString(); // Use helper
                 setFormData({ ...INITIAL_STATE, id: Math.random().toString(), date: today, isChristianMode: formData.isChristianMode });
                 setCurrentStep(0);
                 setView(VIEWS.WIZARD);
